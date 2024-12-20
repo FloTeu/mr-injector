@@ -43,34 +43,51 @@ class ModuleView:
 
         self.init_session()
 
-        self._solved = st.session_state[self.session_key].is_solved()
 
     def init_session(self):
         if self.session_key not in st.session_state:
             st.session_state[self.session_key] = ModuleSession(
+                was_solved=False,
                 num_exercises=len(self.render_exercises),
                 exercise_solved={i: False for i in range(len(self.render_exercises))}
             )
 
-    def display(self):
-        try:
+    def module_session(self) -> ModuleSession:
+        return st.session_state[self.session_key]
 
+    def is_solved(self):
+        return self.module_session().is_solved()
+
+    def display(self):
+        module_header_placeholder = st.empty()
+        try:
             with st.spinner():
-                _display_module_header(self.module_nr, self.title, self._solved)
-                with st.expander("Open Exercise"):
+                with module_header_placeholder:
+                    _display_module_header(self.module_nr, self.title, self.is_solved())
+                with st.expander("Open Exercises"):
                     for i, exercise in enumerate(self.render_exercises):
-                        session_solved = st.session_state[self.session_key].exercise_solved[i]
-                        _display_module_header(i, "", session_solved, number_prefix="Exercise ")
+                        exercise_header_placeholder = st.empty()
+                        session_solved = self.module_session().exercise_solved[i]
+                        with exercise_header_placeholder:
+                            _display_module_header(i+1, "", session_solved, number_prefix="Exercise ")
                         solved = exercise()
                         if solved is True and not session_solved:
-                            st.session_state[self.session_key].exercise_solved[i] = True
+                            self.module_session().exercise_solved[i] = True
                         if solved or session_solved:
                             st.write("🎉 Congratulations you solved the exercise!")
+                            # update exercise header if solved
+                            with exercise_header_placeholder:
+                                _display_module_header(i+1, "", True, number_prefix="Exercise ")
 
+                        st.divider()
 
-
-
-
+            # update module header if solved
+            if self.is_solved():
+                with module_header_placeholder:
+                    _display_module_header(self.module_nr, self.title, True)
+                if not self.module_session().was_solved:
+                    st.balloons()
+                    self.module_session().was_solved = True
         except Exception as exp:
             print(exp)
             st.error(f"Error during rendering module: {self.title}")
