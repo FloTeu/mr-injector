@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.module-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    justify-content: space-between; /* Space out children */
+}
+
+.module-number {
+    font-size: 24px; /* Larger font size for emphasis */
+    font-weight: bold; /* Bold font for visibility */
+    color: #007BFF; /* Blue color for the module number */
+    margin-right: 15px; /* Space between number and title */
+}
+
+.module-title {
+    font-size: 20px; /* Slightly smaller than module number */
+    color: #333; /* Dark color for better readability */
+}
+
+.module-status {
+    font-size: 24px; /* Size for the status icon */
+    color: #28a745; /* Green for checkmark */
+    margin-left: auto; /* Push status to the right */
+}
+
+.module-status.not-solved {
+    color: #dc3545; /* Red for "x" symbol */
+}
