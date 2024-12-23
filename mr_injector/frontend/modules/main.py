@@ -35,8 +35,9 @@ def _display_module_header(module_nr: int, title: str, is_solved: bool = False, 
 class ModuleView:
     """View class to render a exercise module"""
 
-    def __init__(self, title: str, module_nr: int, session_key: str, render_exercises: list[Callable[[], bool | None]]):
+    def __init__(self, title: str, module_nr: int, session_key: str, render_exercises: list[Callable[[], bool | None]], description: str = ""):
         self.title = title
+        self.description = description
         self.module_nr = module_nr
         self.session_key = session_key
         self.render_exercises = render_exercises
@@ -60,11 +61,13 @@ class ModuleView:
 
     def display(self):
         module_header_placeholder = st.empty()
+        if self.description:
+            st.info(self.description)
         try:
             with st.spinner():
                 with module_header_placeholder:
                     _display_module_header(self.module_nr, self.title, self.is_solved())
-                with st.expander("Open Exercises"):
+                with st.expander("Open Exercises", expanded=not self.is_solved()):
                     for i, exercise in enumerate(self.render_exercises):
                         exercise_header_placeholder = st.empty()
                         session_solved = self.module_session().exercise_solved[i]
@@ -74,7 +77,7 @@ class ModuleView:
                         if solved is True and not session_solved:
                             self.module_session().exercise_solved[i] = True
                         if solved or session_solved:
-                            st.write("🎉 Congratulations you solved the exercise!")
+                            st.success("🎉 Congratulations you solved the exercise!")
                             # update exercise header if solved
                             with exercise_header_placeholder:
                                 _display_module_header(i+1, "", True, number_prefix="Exercise ")

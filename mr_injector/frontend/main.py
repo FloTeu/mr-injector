@@ -5,6 +5,7 @@ import streamlit as st
 import mr_injector
 from openai import OpenAI
 from mr_injector.backend.openai import create_open_ai_client
+from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
 from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
 
@@ -26,12 +27,29 @@ def main():
     col2.image(root_dir / "files/logo_mr_injector.png")
     client = get_open_ai_client()
 
+    my_bar = st.empty()
+    modules: list[list[ModuleView]] = []
     if client is not None:
-        get_module_prompt_leaking(client).display()
-        #get_module_prompt_injection(client).display()
+        tabs = st.tabs(["Prompt Leakage", "Prompt Injection"])
+        modules.append(get_module_prompt_leaking(client))
+        modules.append([get_module_prompt_injection(client)])
+        assert len(tabs) == len(modules), "Tabs and modules must have the same length"
+
+        # Display modules
+        for module_list, tab in zip(modules,tabs):
+            with tab:
+                for module in module_list:
+                    module.display()
     else:
         st.warning("Pleader provide a openai API key first")
 
+    percentage_solved = 0
+    modules_solved: list[str] = []
+    for module_list in modules:
+        if all(module.is_solved() for module in module_list):
+            percentage_solved += (1/len(modules))
+            modules_solved.extend([module.title for module in module_list])
+        my_bar.progress(percentage_solved, text=f"Modules solved: {', '.join(modules_solved)}")
 
 if __name__ == "__main__":
     main()
