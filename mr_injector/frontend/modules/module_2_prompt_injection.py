@@ -14,7 +14,7 @@ def get_module_prompt_injection(client: OpenAI) -> ModuleView:
 unintended ways. These inputs can affect the model even if they are imperceptible to humans,
 therefore prompt injections do not need to be human-visible/readable, as long as the content is
 parsed by the model.""",
-        module_nr=3,
+        module_nr=2,
         session_key=SESSION_KEY,
         render_exercises=[display_module_prompt_injection]
     )

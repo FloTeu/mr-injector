@@ -90,7 +90,7 @@ def main():
         )
 
 
-        if selection == 0:
+        if selection == 0 or selection is None:
             display_general(client)
         else:
             module_list = modules[selection - 1]

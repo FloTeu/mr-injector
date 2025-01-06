@@ -6,6 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 packages = [{include = "mr_injector"}]
 dependencies = [
+    "langchain-community>=0.3.14",
+    "langchain-openai>=0.2.14",
+    "langgraph>=0.2.61",
     "openai>=1.58.1",
     "python-dotenv>=1.0.1",
     "streamlit>=1.41.1",
