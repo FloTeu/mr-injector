@@ -8,7 +8,8 @@ from mr_injector.backend.openai import create_open_ai_client, llm_call
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
 from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
-from mr_injector.frontend.modules.module_3_unbounded_consumption import get_module_unbounded_consumption
+from mr_injector.frontend.modules.module_3_jailbreaking import get_module_jailbreak
+from mr_injector.frontend.modules.module_4_unbounded_consumption import get_module_unbounded_consumption
 
 
 def get_open_ai_client() -> OpenAI | None:
@@ -50,7 +51,7 @@ The assistant is named Mr. Injector."""
         with st.spinner():
             llm_answer = llm_call(client, system_prompt, user_prompt)
         st.write(f"LLM Answer:")
-        st.code(llm_answer, language="python")
+        st.text(llm_answer)#, language="python")
 
 
 def main():
@@ -84,7 +85,6 @@ def main():
             "Tool",
             options=option_map.keys(),
             format_func=lambda option: option_map[option],
-            default=0,
             selection_mode="single",
             key="module_selection_bar"
         )
