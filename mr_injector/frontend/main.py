@@ -10,6 +10,7 @@ from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
 from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
 from mr_injector.frontend.modules.module_3_jailbreaking import get_module_jailbreak
+from mr_injector.frontend.modules.module_5_rag import get_module_rag
 from mr_injector.frontend.modules.module_4_unbounded_consumption import get_module_unbounded_consumption
 from mr_injector.frontend.security import check_password
 
@@ -70,21 +71,24 @@ def main():
     my_bar = st.empty()
     my_bar.progress(0, text=f"Modules solved: ")
 
-    modules: list[list[ModuleView]] = []
+    modules: dict[int, list[ModuleView]] = {}
     if client is not None:
-        module1 = get_module_prompt_leaking(client)
+        module1 = get_module_prompt_leaking(client)[0]
         module2 = get_module_prompt_injection(client)
         module3 = get_module_unbounded_consumption(client)
+        module5 = get_module_rag(client)
 
         option_map = {
             0: ":material/add: Intro",
             1: ":material/zoom_in: Prompt Leakage",
             2: ":material/zoom_out: Prompt Injection",
             3: f":material/zoom_out: {module3.title}",
+            5: f":material/zoom_out: {module5.title}",
         }
-        modules.append(module1)
-        modules.append([module2])
-        modules.append([module3])
+        modules[module1.module_nr] = [module1]
+        modules[module2.module_nr] = [module2]
+        modules[module3.module_nr] = [module3]
+        modules[module5.module_nr] = [module5]
         assert (len(option_map)-1) == len(modules), "Tabs and modules must have the same length"
 
         selection = st.segmented_control(
@@ -99,7 +103,7 @@ def main():
         if selection == 0 or selection is None:
             display_general(client)
         else:
-            module_list = modules[selection - 1]
+            module_list = modules[selection]
             for module in module_list:
                 module.display()
     else:
@@ -107,7 +111,7 @@ def main():
 
     percentage_solved = 0
     modules_solved: list[str] = []
-    for module_list in modules:
+    for i, module_list in modules.items():
         if all(module.is_solved() for module in module_list):
             percentage_solved += (1/len(modules))
             modules_solved.extend([module.title for module in module_list])
