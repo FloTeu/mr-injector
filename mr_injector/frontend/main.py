@@ -5,11 +5,13 @@ import streamlit as st
 import mr_injector
 from openai import OpenAI
 from mr_injector.backend.openai import create_open_ai_client, llm_call
+from mr_injector.backend.utils import booleanize
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
 from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
 from mr_injector.frontend.modules.module_3_jailbreaking import get_module_jailbreak
 from mr_injector.frontend.modules.module_4_unbounded_consumption import get_module_unbounded_consumption
+from mr_injector.frontend.security import check_password
 
 
 def get_open_ai_client() -> OpenAI | None:
@@ -55,6 +57,10 @@ The assistant is named Mr. Injector."""
 
 
 def main():
+    if not booleanize(os.environ.get("DEBUG", False)):
+        if not check_password():
+            st.stop()  # Do not continue if check_password is not True.
+
     col1, col2 = st.columns([0.8, 0.2])
     col1.header("Mr. Injector")
     root_dir = Path(mr_injector.__file__).parent.parent

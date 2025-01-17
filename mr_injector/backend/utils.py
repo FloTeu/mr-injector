@@ -1,6 +1,11 @@
 import hashlib
 
 
+def booleanize(s: bool | str) -> bool:
+    if isinstance(s, bool):
+        return s
+    return s.lower() in ['true', '1', "y", "yes"]
+
 def hash_text(text):
     # Convert the text to bytes
     text_bytes = text.encode('utf-8')

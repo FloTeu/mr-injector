@@ -19,6 +19,7 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
 COPY mr_injector/ /app/mr_injector/
+COPY secrets.toml /app/.streamlit/secrets.toml
 COPY files/ /app/files/
 COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
@@ -26,10 +27,9 @@ COPY README.md /app/README.md
 
 # Setup virtual environment
 RUN uv sync --frozen
-RUN . .venv/bin/activate
 
 EXPOSE 8501
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "mr_injector/frontend/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["uv", "run", "streamlit", "run", "mr_injector/frontend/main.py", "--server.port=8501", "--server.address=0.0.0.0", "--browser.gatherUsageStats=false"]

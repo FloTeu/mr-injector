@@ -5,7 +5,7 @@
 
 ## Overview
 
-This project serves as a **demonstration of prompt injection** techniques aimed at educating users on how to identify and exploit vulnerabilities in systems that utilize **Large Language Models (LLMs)**. The demo is designed to be user-friendly and can be run locally, making it ideal for presentations and educational purposes.
+This project serves as a **demonstration of prompt injection** techniques aimed at educating users on how to identify and exploit vulnerabilities in systems that utilize **Large Language Models (LLMs)**. The demo is designed to be user-friendly and can be run locally or in a containerized environment, making it ideal for presentations and educational purposes.
 
 
 
@@ -36,16 +36,43 @@ To set up the project locally, follow these steps:
    
 ## Run locally
 
-1. **Activate virtual environment**
+1. **Setup environment file**
+   ```bash
+   cp .env.template .env
+   # populate .env file with values
+   ```
+   If you run the app locally, set DEBUG to True.
+2. **Activate virtual environment**
    ```bash
    # execute this in root of the project
    . .venv/bin/activate
    ```
-2. **Run streamlit frontend**
+3. **Run streamlit frontend**
    ```bash
    # execute this in root of the project
    streamlit run mr_injector/frontend/main.py
    ```
  
+## Run with Docker
+1. **Setup environment file**
+   ```bash
+   cp .env.template .env
+   # populate .env file with values
+   ```
+2. **Setup secret file**
+   Streamlit secret file adds a simple layer of security with a global password
+   ```bash
+   cp secrets.toml.template secrets.toml
+   # populate secrets.toml file with values
+   ```
+3. **Build docker image**
+   ```bash
+   docker build -t mr-injector .
+   ```
+4. **Run docker container**
+   ```bash
+   docker run -p 8501:8501 mr-injector
+   ```
+
 
    
