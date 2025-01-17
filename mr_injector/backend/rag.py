@@ -3,8 +3,6 @@ import json
 from typing import List
 from haystack import Document
 from haystack import Pipeline
-from haystack.components.generators import AzureOpenAIGenerator
-from haystack.utils import Secret
 
 from mr_injector.backend.models.documents import VDIDoc
 
@@ -32,12 +30,6 @@ def create_haystack_vdi_documents(directory_path: str) -> List[Document]:
     return documents
 
 
-def get_llm_generator(model_name) -> AzureOpenAIGenerator:
-  return AzureOpenAIGenerator(
-              azure_endpoint="https://vdi-prompting-seminar-se-public.openai.azure.com/",
-              api_key=Secret.from_token(openai_api_key),
-              azure_deployment=model_name)
-
 
 def get_rag_pipeline(text_embedder, retriever, prompt_builder, generator) -> Pipeline:
   rag_pipeline = Pipeline()
@@ -54,7 +46,7 @@ def get_rag_pipeline(text_embedder, retriever, prompt_builder, generator) -> Pip
 
   return rag_pipeline
 
-def get_retrieval_pipeline(text_embedder, retriever, prompt_builder, generator) -> Pipeline:
+def get_retrieval_pipeline(text_embedder, retriever) -> Pipeline:
   rag_pipeline = Pipeline()
   # Add components to your pipeline
   rag_pipeline.add_component("text_embedder", text_embedder)

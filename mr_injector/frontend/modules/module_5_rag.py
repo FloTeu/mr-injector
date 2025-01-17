@@ -1,3 +1,4 @@
+import json
 import os
 from functools import partial
 from pathlib import Path
@@ -16,7 +17,7 @@ from haystack import Document
 
 import mr_injector
 from mr_injector.backend.models.documents import RagDocumentSet
-from mr_injector.backend.rag import get_llm_generator, get_rag_pipeline, get_retrieval_pipeline, \
+from mr_injector.backend.rag import get_rag_pipeline, get_retrieval_pipeline, \
     create_haystack_vdi_documents
 from mr_injector.backend.utils import hash_text
 from mr_injector.frontend.modules.main import ModuleView
@@ -124,7 +125,7 @@ def display_exercise_rag(client: OpenAI,
     rag_pipeline = get_rag_pipeline(text_embedder, retriever, prompt_builder, generator)
     retrieval_pipeline = get_retrieval_pipeline(
         SentenceTransformersTextEmbedder(model="sentence-transformers/all-MiniLM-L6-v2"),
-        InMemoryEmbeddingRetriever(document_store, top_k=5), prompt_builder, generator)
+        InMemoryEmbeddingRetriever(document_store, top_k=5))
 
     question = st.text_input("Question:", key=f"rag_question_{hash_text(task_text)}")
 
@@ -145,6 +146,21 @@ def exercise_2_fn(retrieved_docs: list[Document], response: str):
         if "113.7" in response or "113,7" in response:
             return True
 
+def exercise_3_fn(retrieved_docs: list[Document], response: str):
+    # Remove unwanted prefixes
+    json_string = response.strip()
+    if json_string.startswith("```json"):
+        json_string = json_string[len("```json"):].strip()
+    if json_string.startswith("```"):
+        json_string = json_string[len("```"):].strip()
+    if json_string.endswith("```"):
+        json_string = json_string[:-len("```")].strip()
+    try:
+        json.loads(json_string)  # Try to parse the JSON string
+        return True
+    except (ValueError, TypeError):  # Catch parsing errors
+        return False
+
 def get_module_rag(client: OpenAI) -> ModuleView:
     return ModuleView(
         title="Retrieval Augmented Generation",
@@ -158,8 +174,13 @@ def get_module_rag(client: OpenAI) -> ModuleView:
                           partial(display_exercise_rag,
                                   client=client,
                                   task_text='**Task**: Add the price meta information to the context and extract the price of the document "Power-to-X - CO2 -Bereitstellung"',
-                                  rag_response_validation_fn=exercise_2_fn)
-                          ]
+                                  rag_response_validation_fn=exercise_2_fn),
+                          partial(display_exercise_rag,
+                                  client=client,
+                                  task_text='**Task**: Return the output in JSON format',
+                                  rag_response_validation_fn=exercise_3_fn)
+                          ],
+    render_exercises_with_level_selectbox=True
     )
 
 

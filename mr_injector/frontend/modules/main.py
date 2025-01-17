@@ -12,6 +12,7 @@ def get_module_styling() -> str:
         text = fp.read()
     return text
 
+
 def _display_module_header(module_nr: int, title: str, is_solved: bool = False, number_prefix: str = "Module "):
     if is_solved:
         checkmark = '<span class="module-status solved">&#10003;</span> <!-- Checkmark -->'
@@ -35,15 +36,21 @@ def _display_module_header(module_nr: int, title: str, is_solved: bool = False, 
 class ModuleView:
     """View class to render a exercise module"""
 
-    def __init__(self, title: str, module_nr: int, session_key: str, render_exercises: list[Callable[[], bool | None]], description: str = ""):
+    def __init__(self,
+                 title: str,
+                 module_nr: int,
+                 session_key: str,
+                 render_exercises: list[Callable[[], bool | None]],
+                 render_exercises_with_level_selectbox: bool = False,
+                 description: str = ""):
         self.title = title
         self.description = description
         self.module_nr = module_nr
         self.session_key = session_key
         self.render_exercises = render_exercises
+        self.render_exercises_with_level_selectbox = render_exercises_with_level_selectbox
 
         self.init_session()
-
 
     def init_session(self):
         if self.session_key not in st.session_state:
@@ -59,6 +66,14 @@ class ModuleView:
     def is_solved(self):
         return self.module_session().is_solved()
 
+    def get_first_not_solved_exercise_index(self) -> int:
+        first_not_solved_exercise_index = 0
+        for index, solved in self.module_session().exercise_solved.items():
+            if not solved:
+                first_not_solved_exercise_index = index
+                break
+        return first_not_solved_exercise_index
+
     def display(self):
         module_header_placeholder = st.empty()
         if self.description:
@@ -67,21 +82,15 @@ class ModuleView:
             with st.spinner():
                 with module_header_placeholder:
                     _display_module_header(self.module_nr, self.title, self.is_solved())
-                with st.expander("Open Exercises", expanded=not self.is_solved()):
+                # with st.expander("Open Exercises", expanded=not self.is_solved()):
+                if self.render_exercises_with_level_selectbox:
+                    levels = [i+1 for i in range(len(self.render_exercises))]
+                    level: int = st.selectbox("Level", levels, index=self.get_first_not_solved_exercise_index())
+                    exercise_index = level -1
+                    self.render_exercise(self.render_exercises[exercise_index], exercise_index)
+                else:
                     for i, exercise in enumerate(self.render_exercises):
-                        exercise_header_placeholder = st.empty()
-                        session_solved = self.module_session().exercise_solved[i]
-                        with exercise_header_placeholder:
-                            _display_module_header(i+1, "", session_solved, number_prefix="Exercise ")
-                        solved = exercise()
-                        if solved is True and not session_solved:
-                            self.module_session().exercise_solved[i] = True
-                        if solved or session_solved:
-                            st.success("🎉 Congratulations you solved the exercise!")
-                            # update exercise header if solved
-                            with exercise_header_placeholder:
-                                _display_module_header(i+1, "", True, number_prefix="Exercise ")
-
+                        self.render_exercise(exercise, i)
                         st.divider()
 
             # update module header if solved
@@ -94,3 +103,17 @@ class ModuleView:
         except Exception as exp:
             print(exp)
             st.error(f"Error during rendering module: {self.title}")
+
+    def render_exercise(self, exercise: Callable[[], bool | None], exercise_index: int):
+        exercise_header_placeholder = st.empty()
+        session_solved = self.module_session().exercise_solved[exercise_index]
+        with exercise_header_placeholder:
+            _display_module_header(exercise_index + 1, "", session_solved, number_prefix="Exercise ")
+        solved = exercise()
+        if solved is True and not session_solved:
+            self.module_session().exercise_solved[exercise_index] = True
+        if solved or session_solved:
+            st.success("🎉 Congratulations you solved the exercise!")
+            # update exercise header if solved
+            with exercise_header_placeholder:
+                _display_module_header(exercise_index + 1, "", True, number_prefix="Exercise ")

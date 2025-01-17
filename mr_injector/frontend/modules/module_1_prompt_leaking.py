@@ -69,7 +69,8 @@ based on the requirements of the application, but may inadvertently contain secr
 discovered, this information can be used to facilitate other attacks.""",
         module_nr=MODULE_NR,
         session_key=f"{SESSION_KEY}_{MODULE_NR}",
-        render_exercises=exercises
+        render_exercises=exercises,
+        render_exercises_with_level_selectbox=True
     )
 
 
