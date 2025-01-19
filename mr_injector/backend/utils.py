@@ -1,10 +1,14 @@
 import hashlib
+import os
 
 
 def booleanize(s: bool | str) -> bool:
     if isinstance(s, bool):
         return s
     return s.lower() in ['true', '1', "y", "yes"]
+
+def is_debug() -> bool:
+    return booleanize(os.environ.get("DEBUG", False))
 
 def hash_text(text) -> str:
     # Convert the text to bytes

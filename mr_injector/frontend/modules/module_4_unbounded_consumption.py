@@ -61,6 +61,6 @@ Unbounded Consumption occurs when a Large Language Model (LLM) application allow
 The high computational demands of LLMs, especially in cloud environments, make them vulnerable to resource exploitation and unauthorized usage.""",
         module_nr=MODULE_NR,
         session_key=SESSION_KEY,
-        render_exercises=[partial(display_exercise_agent_ddos,
-                client=client)]
+        exercises=[partial(display_exercise_agent_ddos,
+                           client=client)]
     )

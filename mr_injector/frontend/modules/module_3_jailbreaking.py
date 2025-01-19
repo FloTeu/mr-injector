@@ -29,7 +29,7 @@ def get_module_jailbreak(client: OpenAI) -> ModuleView:
 # The high computational demands of LLMs, especially in cloud environments, make them vulnerable to resource exploitation and unauthorized usage.""",
         module_nr=MODULE_NR,
         session_key=SESSION_KEY,
-        render_exercises=[partial(display_exercise_jsilbreak,
-                                  system_prompt=f'''Test''',
-                                  client=client)]
+        exercises=[partial(display_exercise_jsilbreak,
+                           system_prompt=f'''Test''',
+                           client=client)]
     )

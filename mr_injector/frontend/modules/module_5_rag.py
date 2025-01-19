@@ -167,19 +167,19 @@ def get_module_rag(client: OpenAI) -> ModuleView:
         description="""### What is Retrieval Augmented Generation?""",
         module_nr=MODULE_NR,
         session_key=SESSION_KEY,
-        render_exercises=[partial(display_exercise_rag,
-                                  client=client,
-                                  task_text="**Task**: Find at least one VDI document with the topic CO2 reduction",
-                                  doc_validation_fn=exercise_1_fn),
-                          partial(display_exercise_rag,
+        exercises=[partial(display_exercise_rag,
+                           client=client,
+                           task_text="**Task**: Find at least one VDI document with the topic CO2 reduction",
+                           doc_validation_fn=exercise_1_fn),
+                   partial(display_exercise_rag,
                                   client=client,
                                   task_text='**Task**: Add the price meta information to the context and extract the price of the document "Power-to-X - CO2 -Bereitstellung"',
                                   rag_response_validation_fn=exercise_2_fn),
-                          partial(display_exercise_rag,
+                   partial(display_exercise_rag,
                                   client=client,
                                   task_text='**Task**: Return the output in JSON format',
                                   rag_response_validation_fn=exercise_3_fn)
-                          ],
+                   ],
     render_exercises_with_level_selectbox=True
     )
 
