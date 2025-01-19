@@ -15,6 +15,7 @@ from haystack.components.generators import OpenAIGenerator
 from haystack.utils import Secret
 from haystack import Document
 
+
 import mr_injector
 from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.rag import get_rag_pipeline, get_retrieval_pipeline, \

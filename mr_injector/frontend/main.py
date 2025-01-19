@@ -44,6 +44,7 @@ def display_general(client: OpenAI):
 Join us on this journey to become more informed and vigilant in the face of evolving security threats. With Mr. Injector, you’re not just learning about risks; you’re experiencing them firsthand. Let’s get started!
     """)
 
+def display_llm_playground(client: OpenAI):
     st.write("##### Playground")
     st.info("Feel free to experiment with system and user prompts")
     default_system_prompt = """The following is a conversation between a human and an AI assistant. \
@@ -67,6 +68,9 @@ def main():
     root_dir = Path(mr_injector.__file__).parent.parent
     col2.image(root_dir / "files/logo_mr_injector.png")
     client = get_open_ai_client()
+
+    with st.sidebar:
+        display_llm_playground(client)
 
     my_bar = st.empty()
     my_bar.progress(0, text=f"Modules solved: ")

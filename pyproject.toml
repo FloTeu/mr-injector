@@ -3,7 +3,7 @@ name = "mr-injector"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"  # Updated to match your Docker image
 packages = [{include = "mr_injector"}]
 dependencies = [
     "haystack-ai>=2.9.0",
@@ -14,11 +14,8 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "sentence-transformers>=3.3.1",
     "streamlit>=1.41.1",
+    #"torch>=1.11.0",  # Keep this line to specify the torch version
 ]
-
-#
-#[project.scripts]
-#frontend = "streamlit"
 
 [build-system]
 requires = ["hatchling"]

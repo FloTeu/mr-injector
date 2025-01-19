@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -26,6 +26,8 @@ COPY uv.lock /app/uv.lock
 COPY README.md /app/README.md
 
 # Setup virtual environment
+RUN uv venv
+RUN pip install --no-cache-dir torch==2.5.1 -f https://download.pytorch.org/whl/torch_stable.html
 RUN uv sync --frozen
 
 EXPOSE 8501
