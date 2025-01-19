@@ -9,6 +9,7 @@ load_dotenv()
 # Set OpenAI API key from environment
 API_KEY = os.getenv("OPENAI_API_KEY")
 
+
 def create_open_ai_client(api_key: str | None = None) -> openai.OpenAI:
     api_key = api_key or API_KEY
     if api_key is None:
@@ -17,12 +18,13 @@ def create_open_ai_client(api_key: str | None = None) -> openai.OpenAI:
         api_key=api_key,
     )
 
+
 def create_langchain_model(client: openai.OpenAI, model_name: str = "gpt-4o-mini") -> ChatOpenAI | AzureOpenAI:
     # Create the agent
     return ChatOpenAI(model_name=model_name)
 
 
-def llm_call(client: openai.OpenAI, system_prompt: str, user_prompt: str) -> str:
+def llm_call(client: openai.OpenAI, system_prompt: str, user_prompt: str, model: str = "gpt-3.5-turbo-1106") -> str:
     response = client.chat.completions.create(
         model="gpt-3.5-turbo-1106",  # Specify the model you want to use
         messages=[
@@ -31,4 +33,3 @@ def llm_call(client: openai.OpenAI, system_prompt: str, user_prompt: str) -> str
         ]
     )
     return response.choices[0].message.content
-

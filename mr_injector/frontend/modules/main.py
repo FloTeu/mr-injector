@@ -29,6 +29,7 @@ class ModulePlaceholder(BaseModel):
         arbitrary_types_allowed = True
 
     header: DeltaGenerator = Field(default_factory=st.empty)
+    progress_bar: DeltaGenerator = Field(default_factory=st.empty)
     info: DeltaGenerator = Field(default_factory=st.empty)
     levels: DeltaGenerator = Field(default_factory=st.empty)
     exercise_placeholders: list[ExercisePlaceholder]
@@ -73,6 +74,7 @@ def _display_start_next_level_loading_bar():
     placeholder.progress(100, "Start next level...")
     time.sleep(0.33)
 
+
 class ModuleView:
     """View class to render a exercise module"""
 
@@ -103,6 +105,7 @@ class ModuleView:
 
     def init_placeholders(self) -> None:
         module_header = st.empty()
+        module_progress_bar = st.empty()
         module_info = st.empty()
         module_levels = st.empty()
         exercise_placeholders = []
@@ -112,6 +115,7 @@ class ModuleView:
             )
         self.placeholder = ModulePlaceholder(
             header=module_header,
+            progress_bar=module_progress_bar,
             info=module_info,
             levels=module_levels,
             exercise_placeholders=exercise_placeholders
@@ -149,12 +153,24 @@ class ModuleView:
             st.selectbox("Level", levels, index=self.get_first_not_solved_exercise_index(),
                                       key="selected_level")
 
+    def render_progress_bar(self):
+        percentage_solved = 0
+        self.placeholder.progress_bar.progress(percentage_solved, text=f"Exercises solved: ")
+        exercised_solved: list[int] = []
+        for i, exercise in enumerate(self.exercises):
+            if self.module_session().exercise_solved[i]:
+                percentage_solved += (1 / len(self.exercises))
+                exercised_solved.append(i + 1)
+            self.placeholder.progress_bar.progress(percentage_solved, text=f"Exercises solved: {exercised_solved if exercised_solved else ''}")
+
+
     def display(self):
         was_solved = False
         if self.placeholder is None:
             self.init_placeholders()
         else:
             self.placeholder.clean_exercises()
+        self.render_progress_bar()
         if self.description:
             self.placeholder.info.info(self.description)
         if self.render_exercises_with_level_selectbox:
@@ -168,8 +184,9 @@ class ModuleView:
                     with self.exercise_placeholder(self.selected_exercise_index()).exercise.container():
                         was_solved = self.render_exercise_with_level_selectbox()
                 else:
+                    # render all exercises at once
                     for i, exercise in enumerate(self.exercises):
-                        self.render_exercise(exercise, i)
+                        self.render_exercise(i)
                         st.divider()
 
             # auto jump to next level
