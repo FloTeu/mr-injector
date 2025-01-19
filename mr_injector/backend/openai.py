@@ -26,7 +26,7 @@ def create_langchain_model(client: openai.OpenAI, model_name: str = "gpt-4o-mini
 
 def llm_call(client: openai.OpenAI, system_prompt: str, user_prompt: str, model: str = "gpt-3.5-turbo-1106") -> str:
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo-1106",  # Specify the model you want to use
+        model=model,  # Specify the model you want to use
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
