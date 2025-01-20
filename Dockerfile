@@ -2,6 +2,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Define a build argument for the Azure OpenAI endpoint
+ARG AZURE_OPENAI_ENDPOINT
+# Set the environment variable in the container
+ENV AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \

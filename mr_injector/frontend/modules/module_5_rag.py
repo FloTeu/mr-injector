@@ -1,9 +1,10 @@
 import json
-import os
 from functools import partial
 from pathlib import Path
 from typing import Callable
+from jinja2 import Template
 
+import openai
 import streamlit as st
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from openai import OpenAI
@@ -11,14 +12,11 @@ from openai import OpenAI
 from haystack.components.builders import PromptBuilder
 from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
-from haystack.components.generators import OpenAIGenerator
-from haystack.utils import Secret
 from haystack import Document
 
-
-import mr_injector
 from mr_injector.backend.models.documents import RagDocumentSet
-from mr_injector.backend.rag import get_rag_pipeline, get_retrieval_pipeline, \
+from mr_injector.backend.openai import llm_call
+from mr_injector.backend.rag import get_retrieval_pipeline, \
     create_haystack_vdi_documents
 from mr_injector.backend.utils import hash_text
 from mr_injector.frontend.modules.main import ModuleView
@@ -72,16 +70,18 @@ def display_prompt_editor(key_suffix: str) -> str:
     """
 
 
-def execute_rag(question, rag_pipeline, retrieval_pipeline):
+def execute_rag(question, prompt, client: openai.OpenAI | openai.AzureOpenAI, retrieval_pipeline) -> tuple[list[Document], str]:
     with st.spinner("Retrieve documents..."):
         retrieved_docs = retrieval_pipeline.run({"text_embedder": {"text": question}})["retriever"]["documents"]
 
     with st.spinner("Generate solution..."):
-        response = rag_pipeline.run({"text_embedder": {"text": question}, "prompt_builder": {"question": question}})
+        template = Template(prompt)
+        rendered_prompt = template.render(documents=retrieved_docs, question=question)
+        response = llm_call(client, "", rendered_prompt)
 
     return retrieved_docs, response
 
-def display_rag_results(docs: list[Document], response):
+def display_rag_results(docs: list[Document], response: str):
     st.divider()
     st.write("#### Documents")
     tabs = st.tabs([f"Document #{i + 1}" for i in range(len(docs))])
@@ -93,7 +93,7 @@ def display_rag_results(docs: list[Document], response):
             st.write(doc.meta)
     st.divider()
     st.write("#### Answer")
-    st.write(response["llm"]["replies"][0])
+    st.write(response)
 
 def display_exercise_rag(client: OpenAI,
                          task_text: str,
@@ -118,12 +118,7 @@ def display_exercise_rag(client: OpenAI,
     st.text(prompt)
     prompt_builder = PromptBuilder(template=prompt)
 
-    # model_name = "gpt-35-turbo"
-    model_name = "gpt-4o-mini"
-    generator = OpenAIGenerator(api_key=Secret.from_token(client.api_key), model=model_name)
-
     # create final RAG pipeline
-    rag_pipeline = get_rag_pipeline(text_embedder, retriever, prompt_builder, generator)
     retrieval_pipeline = get_retrieval_pipeline(
         SentenceTransformersTextEmbedder(model="sentence-transformers/all-MiniLM-L6-v2"),
         InMemoryEmbeddingRetriever(document_store, top_k=5))
@@ -131,12 +126,12 @@ def display_exercise_rag(client: OpenAI,
     question = st.text_input("Question:", key=f"rag_question_{hash_text(task_text)}")
 
     if st.button("Run RAG pipeline", key=f"rag_run_button_{hash_text(task_text)}"):
-        retrieved_docs, response = execute_rag(question, rag_pipeline, retrieval_pipeline)
+        retrieved_docs, response = execute_rag(question, prompt, client, retrieval_pipeline)
         display_rag_results(retrieved_docs, response)
         if doc_validation_fn is not None:
             return doc_validation_fn(retrieved_docs)
         if rag_response_validation_fn is not None:
-            return rag_response_validation_fn(retrieved_docs, response["llm"]["replies"][0])
+            return rag_response_validation_fn(retrieved_docs, response)
     return False
 
 def exercise_1_fn(retrieved_docs: list[Document]):

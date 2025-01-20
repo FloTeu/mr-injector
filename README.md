@@ -68,6 +68,8 @@ To set up the project locally, follow these steps:
 3. **Build docker image**
    ```bash
    docker build -t mr-injector .
+   # or with Azure open ai setup
+   docker build --build-arg AZURE_OPENAI_ENDPOINT=<your-endpoint-url> -t mr-injector .
    ```
 4. **Run docker container**
    ```bash

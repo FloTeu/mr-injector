@@ -16,21 +16,30 @@ from mr_injector.frontend.security import check_password
 
 
 def get_open_ai_client() -> OpenAI | None:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if api_key is None:
-        api_key = st.text_input("OpenAI key", type="password")
-    if api_key:
-        return create_open_ai_client(api_key=api_key)
+    azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", None)
+    if azure_endpoint:
+        api_key = os.getenv("AZURE_OPENAI_API_KEY")
     else:
-        return  None
+        api_key = os.getenv("OPENAI_API_KEY")
+    if api_key is None:
+        api_key = st.text_input(("Azure " if azure_endpoint else "") + "OpenAI key", type="password")
+    if api_key:
+        return create_open_ai_client(api_key=api_key,
+                                     azure_endpoint=azure_endpoint
+                                     )
+    else:
+        return None
+
 
 def display_general(client: OpenAI):
     st.subheader("Introduction")
     button_label = "Get started"
     st.info(f'To directly start with the modules, please use the tabs above (or click "{button_label}")')
+
     def _focus_first_module():
         if "module_selection_bar" in st.session_state:
             st.session_state.module_selection_bar = 1
+
     st.button(button_label, on_click=_focus_first_module)
 
     st.write("""
@@ -43,6 +52,7 @@ def display_general(client: OpenAI):
 
 Join us on this journey to become more informed and vigilant in the face of evolving security threats. With Mr. Injector, you’re not just learning about risks; you’re experiencing them firsthand. Let’s get started!
     """)
+
 
 def display_llm_playground(client: OpenAI):
     st.write("##### Playground")
@@ -62,7 +72,7 @@ Your responses should be straightforward and aimed at empowering users to achiev
         with st.spinner():
             llm_answer = llm_call(client, system_prompt, user_prompt, model="gpt-4o-mini")
         st.write(f"LLM Answer:")
-        st.text(llm_answer)#, language="python")
+        st.text(llm_answer)  # , language="python")
 
 
 def main():
@@ -75,15 +85,19 @@ def main():
     root_dir = Path(mr_injector.__file__).parent.parent
     col2.image(root_dir / "files/logo_mr_injector.png")
     client = get_open_ai_client()
+    no_api_key_warning = "Please provide a valid API key first"
 
     with st.sidebar:
-        display_llm_playground(client)
-
-    my_bar = st.empty()
-    my_bar.progress(0, text=f"Modules solved: ")
+        if client:
+            display_llm_playground(client)
+        else:
+            st.warning(no_api_key_warning)
 
     modules: dict[int, list[ModuleView]] = {}
     if client is not None:
+        my_bar = st.empty()
+        my_bar.progress(0, text=f"Modules solved: ")
+
         module1 = get_module_prompt_leaking(client)[0]
         module2 = get_module_prompt_injection(client)
         module3 = get_module_unbounded_consumption(client)
@@ -100,7 +114,7 @@ def main():
         modules[module2.module_nr] = [module2]
         modules[module3.module_nr] = [module3]
         modules[module5.module_nr] = [module5]
-        assert (len(option_map)-1) == len(modules), "Tabs and modules must have the same length"
+        assert (len(option_map) - 1) == len(modules), "Tabs and modules must have the same length"
 
         selection = st.segmented_control(
             "Tool",
@@ -110,25 +124,24 @@ def main():
             key="module_selection_bar"
         )
 
-
         if selection == 0 or selection is None:
             display_general(client)
         else:
             module_list = modules[selection]
             for module in module_list:
                 module.display()
-    else:
-        st.warning("Pleader provide a openai API key first")
 
-    percentage_solved = 0
-    modules_solved: list[str] = []
-    for i, module_list in modules.items():
-        if all(module.is_solved() for module in module_list):
-            percentage_solved += (1/len(modules))
-            modules_solved.extend([module.title for module in module_list])
-        my_bar.progress(percentage_solved, text=f"Modules solved: {', '.join(modules_solved)}")
+        percentage_solved = 0
+        modules_solved: list[str] = []
+        for i, module_list in modules.items():
+            if all(module.is_solved() for module in module_list):
+                percentage_solved += (1 / len(modules))
+                modules_solved.extend([module.title for module in module_list])
+            my_bar.progress(percentage_solved, text=f"Modules solved: {', '.join(modules_solved)}")
+    else:
+        st.warning(no_api_key_warning)
+
 
 
 if __name__ == "__main__":
     main()
-

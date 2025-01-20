@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 from typing import Callable
 from pydantic import BaseModel, Field
+from openai import BadRequestError
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -201,6 +202,9 @@ class ModuleView:
                 if not self.module_session().was_solved:
                     st.balloons()
                     self.module_session().was_solved = True
+        except BadRequestError as exp:
+            st.error(f"Request Filter. Exception: "
+                     f"{exp}")
         except Exception as exp:
             print(exp)
             st.error(f"Error during rendering module: {self.title}")
