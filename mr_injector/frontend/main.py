@@ -4,13 +4,15 @@ from pathlib import Path
 import streamlit as st
 import mr_injector
 from openai import OpenAI
+
+from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.openai import create_open_ai_client, llm_call
 from mr_injector.backend.utils import booleanize
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
 from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
 from mr_injector.frontend.modules.module_3_jailbreaking import get_module_jailbreak
-from mr_injector.frontend.modules.module_5_rag import get_module_rag
+from mr_injector.frontend.modules.module_5_rag import get_module_rag, DATA_SELECTION_SESSION_KEY
 from mr_injector.frontend.modules.module_4_unbounded_consumption import get_module_unbounded_consumption
 from mr_injector.frontend.security import check_password
 
@@ -101,7 +103,8 @@ def main():
         module1 = get_module_prompt_leaking(client)[0]
         module2 = get_module_prompt_injection(client)
         module3 = get_module_unbounded_consumption(client)
-        module5 = get_module_rag(client)
+        selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
+        module5 = get_module_rag(client)[selected_doc_set]
 
         option_map = {
             0: ":material/add: Intro",

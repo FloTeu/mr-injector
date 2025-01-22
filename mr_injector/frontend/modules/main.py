@@ -10,7 +10,6 @@ from streamlit.delta_generator import DeltaGenerator
 import mr_injector.frontend.styling as styling
 from mr_injector.frontend.session import ModuleSession
 
-
 class ExercisePlaceholder(BaseModel):
     class Config:
         arbitrary_types_allowed = True
@@ -32,6 +31,7 @@ class ModulePlaceholder(BaseModel):
     header: DeltaGenerator = Field(default_factory=st.empty)
     progress_bar: DeltaGenerator = Field(default_factory=st.empty)
     info: DeltaGenerator = Field(default_factory=st.empty)
+    data_selection: DeltaGenerator = Field(default_factory=st.empty)
     levels: DeltaGenerator = Field(default_factory=st.empty)
     exercise_placeholders: list[ExercisePlaceholder]
 
@@ -84,6 +84,7 @@ class ModuleView:
                  module_nr: int,
                  session_key: str,
                  exercises: list[Callable[[], bool | None]],
+                 data_selection_fn: Callable[[], None] | None = None,
                  render_exercises_with_level_selectbox: bool = False,
                  description: str = ""):
         self.title = title
@@ -92,6 +93,7 @@ class ModuleView:
         self.session_key = session_key
         self.exercises = exercises
         self.render_exercises_with_level_selectbox = render_exercises_with_level_selectbox
+        self.data_selection_fn = data_selection_fn
         self.placeholder: ModulePlaceholder | None = None
 
         self.init_session()
@@ -108,6 +110,7 @@ class ModuleView:
         module_header = st.empty()
         module_progress_bar = st.empty()
         module_info = st.empty()
+        module_data_selection = st.empty()
         module_levels = st.empty()
         exercise_placeholders = []
         for _ in self.exercises:
@@ -117,6 +120,7 @@ class ModuleView:
         self.placeholder = ModulePlaceholder(
             header=module_header,
             progress_bar=module_progress_bar,
+            data_selection=module_data_selection,
             info=module_info,
             levels=module_levels,
             exercise_placeholders=exercise_placeholders
@@ -176,6 +180,9 @@ class ModuleView:
             self.placeholder.info.info(self.description)
         if self.render_exercises_with_level_selectbox:
             self.render_level_selectbox()
+        if self.data_selection_fn:
+            with self.placeholder.data_selection:
+                self.data_selection_fn()
         try:
             with st.spinner():
                 with self.placeholder.header:
