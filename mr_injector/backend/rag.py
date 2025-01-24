@@ -57,12 +57,20 @@ def create_haystack_bibtex_citations(file_path: Path | str) -> List[Document]:
               title=entry['title'],
               creators=[[auth_.get('firstName', ''), auth_['lastName']] if 'lastName' in auth_.keys() else [auth_['name']] for auth_ in entry['creators']],
               tags=[tag['tag'] for tag in entry['tags']],
-              date=parsed_date, abstract=entry.get('abstractNote'),
+              date=parsed_date,
+              abstract=entry.get('abstractNote'),
               entry_type=entry['itemType'],
               doi=entry.get('DOI'))
-          content = f"{citation.title} {citation.abstract} {citation.tags}"
+          content = f"Title: {citation.title} Abstract: {citation.abstract} Tags: {citation.tags}"
           doc = Document(content=content, meta=citation.dict())
           documents.append(doc)
+
+          if len(citation.creators) > 0:
+              creators_string = ", ".join([" ".join(c) for c in citation.creators])
+              content = f"Creators: {creators_string}"
+              doc = Document(content=content, meta=citation.dict())
+              documents.append(doc)
+
     return documents
 
 
@@ -92,28 +100,31 @@ def get_retrieval_pipeline(text_embedder, retriever) -> Pipeline:
 
   return rag_pipeline
 
-def get_default_document_set_context_prompt(document_set: RagDocumentSet) -> str:
+def get_default_document_set_context_prompt(document_set: RagDocumentSet,
+                                            include_all_relevant_meta: bool = False) -> str:
     if document_set == RagDocumentSet.VDI_DOCS:
+        extended_meta = 'Price: {{ document.meta["price"] }}' if include_all_relevant_meta else ""
         return """Documents:
-{% for document in documents %}
-    Abstract: {{ document.content }}
+{% for document in documents %}""" + """
+    Abstract: {{ document.meta["abstract"] }}
     Author: {{ document.meta["author"] }}
     Title: {{ document.meta["title"] }}
     Release date: {{ document.meta["release_date"] }}
     Currency: {{ document.meta["currency"] }}
+    """ + extended_meta + """
 {% endfor %}"""
     elif document_set == RagDocumentSet.SCIENCE_PAPERS:
+        extended_meta = 'Creators: {{ document.meta["creators"] }}' if include_all_relevant_meta else ""
         return """Documents:
-{% for document in documents %}
-    Abstract: {{ document.content }}
-    Authors: {{ document.meta["creators"] }}
+{% for document in documents %}""" + """
+    Abstract: {{ document.meta["abstractNote"] }}
     Title: {{ document.meta["title"] }}
     Tags: {{ document.meta["tags"] }}
     Publication year: {{ document.meta["date"] }}
     Type: {{ document.meta["entry_type"] }}
     DOI: {{ document.meta["doi"] }}
-{% endfor %}
-"""
+    """ + extended_meta + """
+{% endfor %}"""
     else:
         logging.warning(f"No system prompt defined for document_set {document_set}")
         return ""

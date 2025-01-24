@@ -88,7 +88,8 @@ discovered, this information can be used to facilitate other attacks.""",
         module_nr=MODULE_NR,
         session_key=f"{SESSION_KEY}_{MODULE_NR}",
         exercises=exercises,
-        render_exercises_with_level_selectbox=True
+        render_exercises_with_level_selectbox=True,
+        jump_to_next_level=True,
     )
 
 

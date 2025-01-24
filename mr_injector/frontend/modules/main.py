@@ -86,6 +86,7 @@ class ModuleView:
                  exercises: list[Callable[[], bool | None]],
                  data_selection_fn: Callable[[], None] | None = None,
                  render_exercises_with_level_selectbox: bool = False,
+                 jump_to_next_level: bool = False,
                  description: str = ""):
         self.title = title
         self.description = description
@@ -93,6 +94,7 @@ class ModuleView:
         self.session_key = session_key
         self.exercises = exercises
         self.render_exercises_with_level_selectbox = render_exercises_with_level_selectbox
+        self.jump_to_next_level = jump_to_next_level
         self.data_selection_fn = data_selection_fn
         self.placeholder: ModulePlaceholder | None = None
 
@@ -199,8 +201,11 @@ class ModuleView:
 
             # auto jump to next level
             if self.render_exercises_with_level_selectbox and was_solved:
-                _display_start_next_level_loading_bar()
-                st.rerun()
+                if self.jump_to_next_level:
+                    _display_start_next_level_loading_bar()
+                    st.rerun()
+                else:
+                    st.button("Start next level")
 
             # update module header if solved
             if self.is_solved():

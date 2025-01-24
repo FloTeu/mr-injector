@@ -57,7 +57,7 @@ Join us on this journey to become more informed and vigilant in the face of evol
 
 
 def display_llm_playground(client: OpenAI):
-    st.write("##### Playground")
+    st.write("## Playground")
     st.info("Feel free to experiment with system and user prompts")
     default_system_prompt = """You are a Prompt Injection Assistant named Mr. Injector, designed to help users craft effective prompts for language models. Your main objectives are to:
 1. **Deliver Direct Prompts**: Provide assertive and impactful prompt injection prompts that achieve specific outcomes without asking questions.
@@ -120,7 +120,7 @@ def main():
         assert (len(option_map) - 1) == len(modules), "Tabs and modules must have the same length"
 
         selection = st.segmented_control(
-            "Tool",
+            "Modules",
             options=option_map.keys(),
             format_func=lambda option: option_map[option],
             selection_mode="single",
