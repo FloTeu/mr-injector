@@ -1,5 +1,4 @@
 import time
-from pathlib import Path
 from typing import Callable
 from pydantic import BaseModel, Field
 from openai import BadRequestError
@@ -7,7 +6,7 @@ from openai import BadRequestError
 import streamlit as st
 import streamlit.components.v1 as components
 from streamlit.delta_generator import DeltaGenerator
-import mr_injector.frontend.styling as styling
+from mr_injector.frontend.css import get_module_styling, get_exercise_styling
 from mr_injector.frontend.session import ModuleSession
 
 class ExercisePlaceholder(BaseModel):
@@ -39,11 +38,15 @@ class ModulePlaceholder(BaseModel):
         for exercise_placeholder in self.exercise_placeholders:
             exercise_placeholder.clean()
 
-
-def get_module_styling() -> str:
-    with open(Path(styling.__path__[0]) / "module.css", "r") as fp:
-        text = fp.read()
-    return text
+def display_task_text_field(task_text: str) -> None:
+    components.html(f"""
+            <style>
+                {get_exercise_styling()}
+            </style>
+            <div>
+                <div class="task-text"><b>Task:</b> {task_text}</div>
+            </div>
+        """, height=70)
 
 
 def _display_module_header(module_nr: int, title: str, is_solved: bool = False, number_prefix: str = "Module "):

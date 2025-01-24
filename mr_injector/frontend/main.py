@@ -103,20 +103,25 @@ def main():
         module1 = get_module_prompt_leaking(client)[0]
         module2 = get_module_prompt_injection(client)
         module3 = get_module_unbounded_consumption(client)
-        selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
-        module5 = get_module_rag(client)[selected_doc_set]
 
         option_map = {
             0: ":material/add: Intro",
             1: ":material/zoom_in: Prompt Leakage",
             2: ":material/zoom_out: Prompt Injection",
             3: f":material/zoom_out: {module3.title}",
-            5: f":material/zoom_out: {module5.title}",
         }
+
         modules[module1.module_nr] = [module1]
         modules[module2.module_nr] = [module2]
         modules[module3.module_nr] = [module3]
-        modules[module5.module_nr] = [module5]
+
+
+        if len(RagDocumentSet.to_list()) > 0:
+            selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
+            module5 = get_module_rag(client)[selected_doc_set]
+            option_map[5] = f":material/zoom_out: {module5.title}"
+            modules[module5.module_nr] = [module5]
+
         assert (len(option_map) - 1) == len(modules), "Tabs and modules must have the same length"
 
         selection = st.segmented_control(

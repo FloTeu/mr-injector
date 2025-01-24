@@ -7,20 +7,22 @@ from jinja2 import Template
 
 import openai
 import streamlit as st
-from haystack.document_stores.in_memory import InMemoryDocumentStore
 from openai import OpenAI, AzureOpenAI
+import streamlit.components.v1 as components
 
 from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder, OpenAIDocumentEmbedder, AzureOpenAIDocumentEmbedder, OpenAITextEmbedder, AzureOpenAITextEmbedder
 from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
 from haystack import Document
 from haystack.utils import Secret
+from haystack.document_stores.in_memory import InMemoryDocumentStore
 
 from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.openai import llm_call
 from mr_injector.backend.rag import get_retrieval_pipeline, \
     create_haystack_vdi_documents, create_haystack_bibtex_citations, get_default_document_set_context_prompt
 from mr_injector.backend.utils import hash_text
-from mr_injector.frontend.modules.main import ModuleView
+from mr_injector.frontend.css import get_exercise_styling
+from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 
 MODULE_NR = 5
 SESSION_KEY = f"module_{MODULE_NR}"
@@ -120,7 +122,7 @@ def display_exercise_rag(client: OpenAI,
                          include_all_relevant_meta_in_system_prompt: bool = False,
                          question: str | None = None
                          ) -> bool | None:
-    st.write(task_text)
+    display_task_text_field(task_text)
     doc_set = RagDocumentSet(st.session_state.get(DATA_SELECTION_SESSION_KEY))
     if doc_set in DOCUMENT_STORE_CACHE:
         document_store = DOCUMENT_STORE_CACHE[doc_set]
@@ -215,18 +217,18 @@ def display_data_selection():
 
 
 def get_module_rag_vdi_exercises(client: OpenAI) -> list[Callable[[], bool | None]]:
-    task_4 = "**Task**: Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
+    task_4 = "Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
     return [partial(display_exercise_rag,
                     client=client,
-                    task_text="**Task**: Find at least one VDI document with the topic CO2 reduction",
+                    task_text="Find at least one VDI document with the topic CO2 reduction",
                     doc_validation_fn=validate_exercise_vdi_docs_1_fn),
             partial(display_exercise_rag,
                     client=client,
-                    task_text='**Task**: Add the price meta information to the context and extract the price of the document "Power-to-X - CO2 -Bereitstellung"',
+                    task_text='Add the price meta information to the context and extract the price of the document "Power-to-X - CO2 -Bereitstellung"',
                     rag_response_validation_fn=validate_exercise_vdi_docs_2_fn),
             partial(display_exercise_rag,
                     client=client,
-                    task_text='**Task**: Return the output in JSON format',
+                    task_text='Return the output in JSON format',
                     rag_response_validation_fn=validate_exercise_vdi_docs_3_fn,
                     include_all_relevant_meta_in_system_prompt=True),
             partial(display_exercise_rag,
@@ -241,18 +243,18 @@ def get_module_rag_vdi_exercises(client: OpenAI) -> list[Callable[[], bool | Non
 
 
 def get_module_rag_science_papers_exercises(client: OpenAI) -> list[Callable[[], bool | None]]:
-    task_4 = '**Task**: Which two fields of research is Wolfgang Ketter working on?'
+    task_4 = 'Which two fields of research is Wolfgang Ketter working on?'
     return [partial(display_exercise_rag,
                     client=client,
-                    task_text="**Task**: Find at least one Paper with the topic electricity market",
+                    task_text="Find at least one Paper with the topic electricity market",
                     doc_validation_fn=validate_exercise_science_papers_1_fn),
             partial(display_exercise_rag,
                     client=client,
-                    task_text='**Task**: Add the creator information to the context and return the creators of electricity market papers',
+                    task_text='Add the creator information to the context and return the creators of electricity market papers',
                     rag_response_validation_fn=validate_exercise_science_papers_2_fn),
             partial(display_exercise_rag,
                     client=client,
-                    task_text='**Task**: Return the output in JSON format',
+                    task_text='Return the output in JSON format',
                     rag_response_validation_fn=validate_exercise_vdi_docs_3_fn),
             partial(display_exercise_rag,
                     client=client,
