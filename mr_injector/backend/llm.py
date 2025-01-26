@@ -1,7 +1,12 @@
+import json
+
 import openai
 import os
+import requests
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, AzureOpenAI
+
+from mr_injector.backend.models.llms import OpenRouterModels
 
 # loads environment files from .env file
 load_dotenv()
@@ -40,3 +45,26 @@ def llm_call(client: openai.OpenAI, system_prompt: str, user_prompt: str, model:
         ]
     )
     return response.choices[0].message.content
+
+
+def open_service_llm_call(system_prompt: str, user_prompt: str, model: OpenRouterModels) -> str:
+    response = requests.post(
+      url="https://openrouter.ai/api/v1/chat/completions",
+      headers={
+        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY', '')}"
+      },
+      data=json.dumps({
+        "model": model,
+        "messages": [
+          {"role": "system", "content": system_prompt},
+          {"role": "user", "content": user_prompt}
+        ],
+        "top_p": 1,
+        "temperature": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "repetition_penalty": 1,
+        "top_k": 0,
+      })
+    )
+    return response.json()["choices"][0]["message"]["content"]

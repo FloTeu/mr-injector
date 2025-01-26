@@ -5,7 +5,7 @@ import streamlit as st
 from openai import OpenAI
 from langchain_core.messages import HumanMessage
 
-from mr_injector.backend.openai import create_langchain_model
+from mr_injector.backend.llm import create_langchain_model
 from mr_injector.backend.utils import hash_text
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.backend.agent import get_agent

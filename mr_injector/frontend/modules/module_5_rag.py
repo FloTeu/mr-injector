@@ -17,7 +17,7 @@ from haystack.utils import Secret
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 
 from mr_injector.backend.models.documents import RagDocumentSet
-from mr_injector.backend.openai import llm_call
+from mr_injector.backend.llm import llm_call
 from mr_injector.backend.rag import get_retrieval_pipeline, \
     create_haystack_vdi_documents, create_haystack_bibtex_citations, get_default_document_set_context_prompt
 from mr_injector.backend.utils import hash_text
@@ -191,7 +191,7 @@ def validate_exercise_vdi_docs_3_fn(retrieved_docs: list[Document], response: st
 
 def validate_exercise_science_papers_3_fn(retrieved_docs: list[Document], response: str, task: str, client: OpenAI | AzureOpenAI):
     system_prompt = f"""You are an exercise instructor,
-Evaluate whether the following answer fulfills the task "{task}". 
+Evaluate whether the following answer delimited by ``` fulfills the task "{task}". 
 The answer to the question is in the broadest sense "energy markets/smart grids" and "information systems for mobility".
 Answer with "yes" if the task is solved and "no" if not.
 Do not include any explanation."""
@@ -201,7 +201,7 @@ Do not include any explanation."""
 
 def validate_exercise_vdi_docs_4_fn(retrieved_docs: list[Document], response: str, task: str, client: OpenAI | AzureOpenAI):
     system_prompt = f"""You are an exercise instructor,
-Evaluate whether the following answer fulfills the task "{task}". 
+Evaluate whether the following answer delimited by ``` fulfills the task "{task}". 
 The answer to the question should be that no document contains the relevant information..
 Answer with "yes" if the task is solved and "no" if not.
 Do not include any explanation."""

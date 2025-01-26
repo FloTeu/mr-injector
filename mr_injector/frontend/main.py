@@ -6,7 +6,7 @@ import mr_injector
 from openai import OpenAI
 
 from mr_injector.backend.models.documents import RagDocumentSet
-from mr_injector.backend.openai import create_open_ai_client, llm_call
+from mr_injector.backend.llm import create_open_ai_client, llm_call
 from mr_injector.backend.utils import booleanize
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
