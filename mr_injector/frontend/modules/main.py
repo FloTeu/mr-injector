@@ -189,18 +189,17 @@ class ModuleView:
             with self.placeholder.data_selection:
                 self.data_selection_fn()
         try:
-            with st.spinner():
-                with self.placeholder.header:
-                    _display_module_header(self.module_nr, self.title, self.is_solved())
-                # with st.expander("Open Exercises", expanded=not self.is_solved()):
-                if self.render_exercises_with_level_selectbox:
-                    with self.exercise_placeholder(self.selected_exercise_index()).exercise.container():
-                        was_solved = self.render_exercise_with_level_selectbox()
-                else:
-                    # render all exercises at once
-                    for i, exercise in enumerate(self.exercises):
-                        self.render_exercise(i)
-                        st.divider()
+            with self.placeholder.header:
+                _display_module_header(self.module_nr, self.title, self.is_solved())
+            # with st.expander("Open Exercises", expanded=not self.is_solved()):
+            if self.render_exercises_with_level_selectbox:
+                with self.exercise_placeholder(self.selected_exercise_index()).exercise.container():
+                    was_solved = self.render_exercise_with_level_selectbox()
+            else:
+                # render all exercises at once
+                for i, exercise in enumerate(self.exercises):
+                    self.render_exercise(i)
+                    st.divider()
 
             # auto jump to next level
             if self.render_exercises_with_level_selectbox and was_solved:
