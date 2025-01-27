@@ -127,7 +127,8 @@ def display_exercise_rag(client: OpenAI,
     if doc_set in DOCUMENT_STORE_CACHE:
         document_store = DOCUMENT_STORE_CACHE[doc_set]
     else:
-        document_store = get_document_store(Path(doc_set.get_path()), client)
+        with st.spinner("Creating document index..."):
+            document_store = get_document_store(Path(doc_set.get_path()), client)
         DOCUMENT_STORE_CACHE[doc_set] = document_store
 
     prompt = display_prompt_editor(hash_text(task_text), doc_set, include_all_relevant_meta_in_system_prompt)

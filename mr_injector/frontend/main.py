@@ -102,18 +102,21 @@ def main():
 
         module1 = get_module_prompt_leaking(client)[0]
         module2 = get_module_prompt_injection(client)
-        module3 = get_module_unbounded_consumption(client)
+        module3 = get_module_jailbreak(client)
+        module4 = get_module_unbounded_consumption(client)
 
         option_map = {
             0: ":material/add: Intro",
             1: ":material/zoom_in: Prompt Leakage",
             2: ":material/zoom_out: Prompt Injection",
             3: f":material/zoom_out: {module3.title}",
+            4: f":material/zoom_out: {module4.title}",
         }
 
         modules[module1.module_nr] = [module1]
         modules[module2.module_nr] = [module2]
         modules[module3.module_nr] = [module3]
+        modules[module4.module_nr] = [module4]
 
 
         if len(RagDocumentSet.to_list()) > 0:
