@@ -54,19 +54,15 @@ To set up the project locally, follow these steps:
    ```
  
 ## Run with Docker
-1. **Setup secret file**
-   Streamlit secret file adds a simple layer of security with a global password
-   ```bash
-   cp secrets.toml.template secrets.toml
-   # populate secrets.toml file with values
-   ```
-2. **Build docker image**
+1. **Build docker image**
    ```bash
    docker build -t mr-injector .
-   # or with Azure open ai setup
+   # or with global password
+   docker build --build-arg STREAMLIT_PASSWORD=<password> -t mr-injector .
+   # or with Azure OpenAI setup
    docker build --build-arg AZURE_OPENAI_ENDPOINT=<your-endpoint-url> --build-arg AZURE_OPENAI_API_KEY=<your-endpoint-api-key> -t mr-injector .
    ```
-3. **Run docker container**
+2. **Run docker container**
    ```bash
    docker run -p 8501:8501 mr-injector
    ```

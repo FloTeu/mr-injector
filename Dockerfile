@@ -2,9 +2,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Define a build argument for the Azure OpenAI endpoint
+# Define build arguments for the Azure OpenAI endpoint
 ARG AZURE_OPENAI_ENDPOINT
 ARG AZURE_OPENAI_API_KEY
+# Define a build argument for the streamlit global password
+ARG STREAMLIT_PASSWORD
 # Set the environment variable in the container
 ENV AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT
 ENV AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY
@@ -26,11 +28,17 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
 COPY mr_injector/ /app/mr_injector/
-COPY secrets.toml /app/.streamlit/secrets.toml
 COPY files/ /app/files/
 COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
 COPY README.md /app/README.md
+
+# Create the secrets.toml file with the password only if it's provided
+RUN mkdir /app/.streamlit
+RUN bash -c 'if [ -n "$STREAMLIT_PASSWORD" ]; then \
+        echo "password = \"$STREAMLIT_PASSWORD\"" > /app/.streamlit/secrets.toml; \
+    fi'
+
 
 # Setup virtual environment
 RUN uv venv
