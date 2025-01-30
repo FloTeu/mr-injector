@@ -4,8 +4,10 @@ WORKDIR /app
 
 # Define a build argument for the Azure OpenAI endpoint
 ARG AZURE_OPENAI_ENDPOINT
+ARG AZURE_OPENAI_API_KEY
 # Set the environment variable in the container
 ENV AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT
+ENV AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY
 
 RUN apt-get update && apt-get install -y \
     build-essential \
