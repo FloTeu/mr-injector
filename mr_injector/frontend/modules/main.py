@@ -1,4 +1,5 @@
 import time
+from dataclasses import dataclass
 from typing import Callable
 from pydantic import BaseModel, Field
 from openai import BadRequestError
@@ -7,7 +8,17 @@ import streamlit as st
 import streamlit.components.v1 as components
 from streamlit.delta_generator import DeltaGenerator
 from mr_injector.frontend.css import get_module_styling, get_exercise_styling
-from mr_injector.frontend.session import ModuleSession
+
+
+@dataclass
+class ModuleSession:
+    was_solved: bool
+    num_exercises: int
+    exercise_solved: dict[int, bool]
+
+    def is_solved(self):
+        return all(list(self.exercise_solved.values()))
+
 
 class ExercisePlaceholder(BaseModel):
     class Config:
@@ -37,6 +48,7 @@ class ModulePlaceholder(BaseModel):
     def clean_exercises(self):
         for exercise_placeholder in self.exercise_placeholders:
             exercise_placeholder.clean()
+
 
 def display_task_text_field(task_text: str) -> None:
     components.html(f"""

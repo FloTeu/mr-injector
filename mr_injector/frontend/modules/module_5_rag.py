@@ -23,6 +23,7 @@ from mr_injector.backend.rag import get_retrieval_pipeline, \
 from mr_injector.backend.utils import hash_text
 from mr_injector.frontend.css import get_exercise_styling
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
+from mr_injector.frontend.session import APP_SESSION_KEY, ModuleNames, AppSession
 
 MODULE_NR = 5
 SESSION_KEY = f"module_{MODULE_NR}"
@@ -115,13 +116,13 @@ def get_haystack_embedding_model(client: OpenAI | AzureOpenAI, text_embedder: bo
     raise ValueError("client not known")
 
 
-def display_exercise_rag(client: OpenAI,
-                         task_text: str,
+def display_exercise_rag(task_text: str,
                          doc_validation_fn: Callable[[list[Document]], bool] | None = None,
                          rag_response_validation_fn: Callable[[list[Document], str], bool] | None = None,
                          include_all_relevant_meta_in_system_prompt: bool = False,
                          question: str | None = None
                          ) -> bool | None:
+    client = st.session_state[APP_SESSION_KEY].client
     display_task_text_field(task_text)
     doc_set = RagDocumentSet(st.session_state.get(DATA_SELECTION_SESSION_KEY))
     if doc_set in DOCUMENT_STORE_CACHE:
@@ -190,7 +191,8 @@ def validate_exercise_vdi_docs_3_fn(retrieved_docs: list[Document], response: st
         return False
 
 
-def validate_exercise_science_papers_3_fn(retrieved_docs: list[Document], response: str, task: str, client: OpenAI | AzureOpenAI):
+def validate_exercise_science_papers_3_fn(retrieved_docs: list[Document], response: str, task: str):
+    client = st.session_state[APP_SESSION_KEY].client
     system_prompt = f"""You are an exercise instructor,
 Evaluate whether the following answer delimited by ``` fulfills the task "{task}". 
 The answer to the question is in the broadest sense "energy markets/smart grids" and "information systems for mobility".
@@ -200,7 +202,8 @@ Do not include any explanation."""
     return "yes" in llm_answer
 
 
-def validate_exercise_vdi_docs_4_fn(retrieved_docs: list[Document], response: str, task: str, client: OpenAI | AzureOpenAI):
+def validate_exercise_vdi_docs_4_fn(retrieved_docs: list[Document], response: str, task: str):
+    client = st.session_state[APP_SESSION_KEY].client
     system_prompt = f"""You are an exercise instructor,
 Evaluate whether the following answer delimited by ``` fulfills the task "{task}". 
 The answer to the question should be that no document contains the relevant information..
@@ -211,58 +214,55 @@ Do not include any explanation."""
 
 
 def display_data_selection():
+    def _change_module_in_session():
+        doc_set = st.session_state[DATA_SELECTION_SESSION_KEY]
+        app_session: AppSession = st.session_state[APP_SESSION_KEY]
+        app_session.modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag()[doc_set]
+
     available_document_sets = RagDocumentSet.to_list()
     if len(available_document_sets) == 0:
         st.error("Could not find any available document sets")
-    st.selectbox("Documents", available_document_sets, key=DATA_SELECTION_SESSION_KEY)
+    st.selectbox("Documents", available_document_sets,
+                 key=DATA_SELECTION_SESSION_KEY,
+                 on_change=_change_module_in_session)
 
 
-def get_module_rag_vdi_exercises(client: OpenAI) -> list[Callable[[], bool | None]]:
+def get_module_rag_vdi_exercises() -> list[Callable[[], bool | None]]:
     task_4 = "Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
     return [partial(display_exercise_rag,
-                    client=client,
                     task_text="Find at least one VDI document with the topic CO2 reduction",
                     doc_validation_fn=validate_exercise_vdi_docs_1_fn),
             partial(display_exercise_rag,
-                    client=client,
                     task_text='Add the price meta information to the context and extract the price of the document "Power-to-X - CO2 -Bereitstellung"',
                     rag_response_validation_fn=validate_exercise_vdi_docs_2_fn),
             partial(display_exercise_rag,
-                    client=client,
                     task_text='Return the output in JSON format',
                     rag_response_validation_fn=validate_exercise_vdi_docs_3_fn,
                     include_all_relevant_meta_in_system_prompt=True),
             partial(display_exercise_rag,
-                    client=client,
                     task_text=task_4,
                     question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
                     rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
-                                                       task=task_4,
-                                                       client=client
+                                                       task=task_4
                                                        ))
             ]
 
 
-def get_module_rag_science_papers_exercises(client: OpenAI) -> list[Callable[[], bool | None]]:
+def get_module_rag_science_papers_exercises() -> list[Callable[[], bool | None]]:
     task_4 = 'Which two fields of research is Wolfgang Ketter working on?'
     return [partial(display_exercise_rag,
-                    client=client,
                     task_text="Find at least one Paper with the topic electricity market",
                     doc_validation_fn=validate_exercise_science_papers_1_fn),
             partial(display_exercise_rag,
-                    client=client,
                     task_text='Add the creator information to the context and return the creators of electricity market papers',
                     rag_response_validation_fn=validate_exercise_science_papers_2_fn),
             partial(display_exercise_rag,
-                    client=client,
                     task_text='Return the output in JSON format',
                     rag_response_validation_fn=validate_exercise_vdi_docs_3_fn),
             partial(display_exercise_rag,
-                    client=client,
                     task_text=task_4,
                     rag_response_validation_fn=partial(validate_exercise_science_papers_3_fn,
                                                        task=task_4,
-                                                       client=client
                                                        ),
                     include_all_relevant_meta_in_system_prompt=True)
             ]
@@ -280,8 +280,8 @@ def get_module_view(exercises: list[Callable[[], bool | None]], session_key: str
     )
 
 
-def get_module_rag(client: OpenAI) -> dict[RagDocumentSet, ModuleView]:
+def get_module_rag() -> dict[RagDocumentSet, ModuleView]:
     return {
-        RagDocumentSet.VDI_DOCS: get_module_view(get_module_rag_vdi_exercises(client), session_key=f"{SESSION_KEY}{RagDocumentSet.VDI_DOCS}"),
-        RagDocumentSet.SCIENCE_PAPERS: get_module_view(get_module_rag_science_papers_exercises(client), session_key=f"{SESSION_KEY}{RagDocumentSet.SCIENCE_PAPERS}")
+        RagDocumentSet.VDI_DOCS: get_module_view(get_module_rag_vdi_exercises(), session_key=f"{SESSION_KEY}_{RagDocumentSet.VDI_DOCS}"),
+        RagDocumentSet.SCIENCE_PAPERS: get_module_view(get_module_rag_science_papers_exercises(), session_key=f"{SESSION_KEY}_{RagDocumentSet.SCIENCE_PAPERS}")
     }

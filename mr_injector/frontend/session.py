@@ -1,10 +1,28 @@
+import streamlit as st
 from dataclasses import dataclass
+from enum import auto
+from typing import Self
+
+from openai import OpenAI, AzureOpenAI
+from mr_injector.backend.models.base import BaseStrEnum
+from mr_injector.frontend.modules.main import ModuleView
+
+APP_SESSION_KEY = "app_session"
+
+class ModuleNames(BaseStrEnum):
+    PROMPT_LEAKAGE = auto()
+    PROMPT_INJECTION = auto()
+    JAILBREAK = auto()
+    UNBOUNDED_CONSUMPTION = auto()
+    RETRIEVAL_AUGMENTED_GENERATION = auto()
+
 
 @dataclass
-class ModuleSession:
-    was_solved: bool
-    num_exercises: int
-    exercise_solved: dict[int, bool]
+class AppSession:
+    modules: dict[ModuleNames, ModuleView]
+    client: OpenAI | AzureOpenAI | None
 
-    def is_solved(self):
-        return all(list(self.exercise_solved.values()))
+
+    def save_in_session(self) -> Self:
+        st.session_state[APP_SESSION_KEY] = self
+        return self

@@ -6,9 +6,9 @@ from openai import OpenAI
 from langchain_core.messages import HumanMessage
 
 from mr_injector.backend.llm import create_langchain_model
-from mr_injector.backend.utils import hash_text
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.backend.agent import get_agent
+from mr_injector.frontend.session import APP_SESSION_KEY
 
 MODULE_NR = 4
 SESSION_KEY = f"module_{MODULE_NR}"
@@ -23,7 +23,8 @@ def get_tavily_api_key() -> str:
     return api_key
 
 
-def display_exercise_agent_ddos(client: OpenAI) -> bool | None:
+def display_exercise_agent_ddos() -> bool | None:
+    client = st.session_state[APP_SESSION_KEY].client
     required_tool_calls = 6
     llm_model = create_langchain_model(client)
     warning_placeholder = st.empty()
@@ -51,7 +52,7 @@ def display_exercise_agent_ddos(client: OpenAI) -> bool | None:
         return False
 
 
-def get_module_unbounded_consumption(client: OpenAI) -> ModuleView:
+def get_module_unbounded_consumption() -> ModuleView:
     return ModuleView(
         title="Unbounded Consumption",
         description="""### What is Unbounded Consumption?
@@ -61,6 +62,5 @@ Unbounded Consumption occurs when a Large Language Model (LLM) application allow
 The high computational demands of LLMs, especially in cloud environments, make them vulnerable to resource exploitation and unauthorized usage.""",
         module_nr=MODULE_NR,
         session_key=SESSION_KEY,
-        exercises=[partial(display_exercise_agent_ddos,
-                           client=client)]
+        exercises=[partial(display_exercise_agent_ddos)]
     )
