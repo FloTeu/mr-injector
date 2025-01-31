@@ -5,7 +5,7 @@ import streamlit as st
 from openai import OpenAI
 
 import mr_injector
-from mr_injector.backend.llm import create_open_ai_client
+from mr_injector.backend.llm import create_open_ai_client, llm_call
 from mr_injector.frontend.session import AppSession, APP_SESSION_KEY
 
 
@@ -44,6 +44,11 @@ def get_open_ai_client() -> OpenAI | None:
         client = create_open_ai_client(api_key=api_key,
                                      azure_endpoint=azure_endpoint
                                      )
+        try:
+            response = llm_call(client, "Write always ok as answer", "")
+        except Exception as e:
+            st.error("Wrong API key")
+            return None
         app_session: AppSession = st.session_state[APP_SESSION_KEY]
         if app_session.client is None:
             app_session.client = client
