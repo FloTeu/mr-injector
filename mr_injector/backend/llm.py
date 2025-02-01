@@ -1,10 +1,12 @@
 import json
+from typing import Type
 
 import openai
 import os
 import requests
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, AzureOpenAI
+from pydantic import BaseModel
 
 from mr_injector.backend.models.llms import OpenRouterModels
 
@@ -22,7 +24,7 @@ def create_open_ai_client(api_key: str | None = None, azure_endpoint: str | None
     if azure_endpoint:
         return openai.AzureOpenAI(
             api_key=api_key,
-            api_version="2024-07-01-preview",
+            api_version="2024-10-21",
             azure_endpoint=azure_endpoint
         )
     else:
@@ -36,15 +38,29 @@ def create_langchain_model(client: openai.OpenAI, model_name: str = "gpt-4o-mini
     return ChatOpenAI(model_name=model_name)
 
 
-def llm_call(client: openai.OpenAI, system_prompt: str, user_prompt: str, model: str = "gpt-4o-mini") -> str:
-    response = client.chat.completions.create(
-        model=model,  # Specify the model you want to use
-        messages=[
+def llm_call(client: openai.OpenAI | openai.AzureOpenAI, system_prompt: str, user_prompt: str, model: str = "gpt-4o-mini", output_model: Type[BaseModel] | None = None) -> str | BaseModel:
+    kwargs = {
+        "model": model,  # Specify the model you want to use
+        "messages":  [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ]
-    )
-    return response.choices[0].message.content
+        ],
+        "seed": 42,
+        "temperature": 0,
+    }
+    if output_model:
+        response = client.beta.chat.completions.parse(
+            **kwargs,
+            response_format=output_model,
+        )
+        return response.choices[0].message.parsed
+
+    else:
+        response = client.chat.completions.create(
+            **kwargs
+        )
+        return response.choices[0].message.content
+
 
 
 def open_service_llm_call(system_prompt: str, user_prompt: str, model: OpenRouterModels) -> str:

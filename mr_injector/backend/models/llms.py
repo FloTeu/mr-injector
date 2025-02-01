@@ -1,7 +1,8 @@
 import os
 
+from enum import StrEnum, auto
+from pydantic import BaseModel
 from mr_injector.backend.models.base import BaseStrEnum
-
 
 class OpenRouterModels(BaseStrEnum):
     LLAMA_3_2_1B = "meta-llama/llama-3.2-1b-instruct:free"
@@ -22,3 +23,11 @@ class OpenRouterModels(BaseStrEnum):
 class OpenAIModels(BaseStrEnum):
     GPT_35_TURBO = "gpt-3.5-turbo"
     GPT_4o_MINI = "gpt-4o-mini"
+
+class LLMValidationResult(StrEnum):
+    YES = auto()
+    NO = auto()
+
+class LLMValidationOutput(BaseModel):
+    result: LLMValidationResult
+    reason: str
