@@ -2,20 +2,28 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Set the locale to ensure UTF-8 support
+# ENV LC_ALL=C.UTF-8
+# ENV LANG=C.UTF-8
+
 # Define build arguments for the Azure OpenAI endpoint
 ARG AZURE_OPENAI_ENDPOINT
 ARG AZURE_OPENAI_API_KEY
 # Define a build argument for the streamlit global password
 ARG STREAMLIT_PASSWORD
+# Define a build argument for optional files
+ARG FILES_URL=""
 # Set the environment variable in the container
 ENV AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT
 ENV AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY
 
+# Install necessary packages
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     software-properties-common \
     git \
+    locales \
     && rm -rf /var/lib/apt/lists/*
 
 # Download the latest installer
@@ -33,6 +41,13 @@ COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
 COPY README.md /app/README.md
 
+# Download files
+RUN if [ -n "$FILES_URL" ]; then \
+    curl -fsSL "$FILES_URL" -o /tmp/files.tar.gz && \
+    tar -xzf /tmp/files.tar.gz --strip-components=1 -C /app/files/ && \
+    rm /tmp/files.tar.gz; \
+fi
+
 # Create the secrets.toml file with the password only if it's provided
 RUN mkdir /app/.streamlit
 RUN bash -c 'if [ -n "$STREAMLIT_PASSWORD" ]; then \
@@ -42,7 +57,7 @@ RUN bash -c 'if [ -n "$STREAMLIT_PASSWORD" ]; then \
 
 # Setup virtual environment
 RUN uv venv
-RUN pip install --no-cache-dir torch==2.5.1 -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 RUN uv sync --frozen
 
 EXPOSE 8501

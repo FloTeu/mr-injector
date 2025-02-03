@@ -23,14 +23,17 @@ def create_haystack_vdi_documents(directory_path: Path | str) -> List[Document]:
     """
     documents = []
     # Iterate over each file in the directory
-    for filename in os.listdir(directory_path):
+    for i, filename in enumerate(os.listdir(directory_path)):
         if filename.endswith(".json"):
             file_path = os.path.join(directory_path, filename)
-            # Open and load the JSON file
-            with open(file_path, 'r', encoding='utf-8') as file:
-                vdi_doc = VDIDoc(**json.load(file))
-                doc = Document(content=vdi_doc.abstract, meta=vdi_doc.dict())
-                documents.append(doc)
+            try:
+                # Open and load the JSON file
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    vdi_doc = VDIDoc(**json.load(file))
+                    doc = Document(content=vdi_doc.abstract, meta=vdi_doc.dict())
+                    documents.append(doc)
+            except Exception as e:
+                print(f"Could not load json file {i} {filename}", str(e))
     return documents
 
 
