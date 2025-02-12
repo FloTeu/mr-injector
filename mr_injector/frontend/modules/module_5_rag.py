@@ -20,7 +20,7 @@ from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.llm import llm_call
 from mr_injector.backend.rag import get_retrieval_pipeline, \
     create_haystack_vdi_documents, create_haystack_bibtex_citations, get_default_document_set_context_prompt
-from mr_injector.backend.utils import hash_text
+from mr_injector.backend.utils import hash_text, booleanize
 from mr_injector.frontend.css import get_exercise_styling
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY, ModuleNames, AppSession
@@ -42,9 +42,7 @@ def get_document_store(file_dir: Path, client: OpenAI | AzureOpenAI) -> InMemory
         docs = create_haystack_vdi_documents(file_dir)
     print("Number of documents", len(docs))
     # create embeddings
-    #doc_embedder = get_haystack_embedding_model(client)
-    doc_embedder = SentenceTransformersDocumentEmbedder(model="sentence-transformers/all-MiniLM-L6-v2")
-    doc_embedder.warm_up()
+    doc_embedder = get_haystack_embedding_model(client)
     docs_with_embeddings = doc_embedder.run(docs)
     document_store.write_documents(docs_with_embeddings["documents"])
     return document_store
@@ -102,18 +100,27 @@ def display_rag_results(docs: list[Document], response: str):
     st.write(response)
 
 
-def get_haystack_embedding_model(client: OpenAI | AzureOpenAI, text_embedder: bool = False) -> OpenAIDocumentEmbedder | OpenAITextEmbedder | AzureOpenAIDocumentEmbedder | AzureOpenAITextEmbedder:
-    if isinstance(client, AzureOpenAI):
-        if text_embedder:
-            return AzureOpenAITextEmbedder(api_key=Secret.from_token(client.api_key), azure_deployment="text-embedding-ada-002", azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT", None))
+def get_haystack_embedding_model(client: OpenAI | AzureOpenAI, text_embedder: bool = False) -> OpenAIDocumentEmbedder | OpenAITextEmbedder | AzureOpenAIDocumentEmbedder | AzureOpenAITextEmbedder | SentenceTransformersTextEmbedder |SentenceTransformersDocumentEmbedder:
+    if booleanize(os.environ.get("USE_OPEN_AI_EMBEDDINGS", False)):
+        if isinstance(client, AzureOpenAI):
+            if text_embedder:
+                embedder = AzureOpenAITextEmbedder(api_key=Secret.from_token(client.api_key), azure_deployment="text-embedding-ada-002", azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT", None))
+            else:
+                embedder = AzureOpenAIDocumentEmbedder(api_key=Secret.from_token(client.api_key), azure_deployment="text-embedding-ada-002", azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT", None))
+        elif isinstance(client, OpenAI):
+            if text_embedder:
+                embedder = OpenAITextEmbedder(api_key=Secret.from_token(client.api_key), model="text-embedding-ada-002")
+            else:
+                embedder = OpenAIDocumentEmbedder(api_key=Secret.from_token(client.api_key), model="text-embedding-ada-002")
         else:
-            return AzureOpenAIDocumentEmbedder(api_key=Secret.from_token(client.api_key), azure_deployment="text-embedding-ada-002", azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT", None))
-    elif isinstance(client, OpenAI):
+            raise ValueError("client not known")
+    else:
         if text_embedder:
-            return OpenAITextEmbedder(api_key=Secret.from_token(client.api_key), model="text-embedding-ada-002")
+            embedder = SentenceTransformersTextEmbedder(model="sentence-transformers/all-MiniLM-L6-v2"),
         else:
-            return OpenAIDocumentEmbedder(api_key=Secret.from_token(client.api_key), model="text-embedding-ada-002")
-    raise ValueError("client not known")
+            embedder = SentenceTransformersDocumentEmbedder(model="sentence-transformers/all-MiniLM-L6-v2")
+        embedder.warm_up()
+    return embedder
 
 
 def display_exercise_rag(task_text: str,
@@ -136,11 +143,13 @@ def display_exercise_rag(task_text: str,
     st.write("#### System prompt")
     st.text(prompt)
 
+    n_docs = st.number_input("Number of context documents", value=5)
+
     # create final RAG pipeline
     retrieval_pipeline = get_retrieval_pipeline(
-        #get_haystack_embedding_model(client, text_embedder=True),
-        SentenceTransformersTextEmbedder(model="sentence-transformers/all-MiniLM-L6-v2"),
-        InMemoryEmbeddingRetriever(document_store, top_k=5))
+        get_haystack_embedding_model(client, text_embedder=True),
+        #SentenceTransformersTextEmbedder(model="sentence-transformers/all-MiniLM-L6-v2"),
+        InMemoryEmbeddingRetriever(document_store, top_k=n_docs))
 
     question = st.text_input("Question:", key=f"rag_question_{hash_text(task_text)}", value=question)
 
@@ -249,7 +258,8 @@ def get_module_rag_vdi_exercises() -> list[Callable[[], bool | None]]:
 
 
 def get_module_rag_science_papers_exercises() -> list[Callable[[], bool | None]]:
-    task_4 = 'Which two fields of research is Wolfgang Ketter working on?'
+    task_5 = 'Which two fields of research is Wolfgang Ketter working on?'
+    task_4 = "Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
     return [partial(display_exercise_rag,
                     task_text="Find at least one Paper with the topic electricity market",
                     doc_validation_fn=validate_exercise_science_papers_1_fn),
@@ -261,8 +271,14 @@ def get_module_rag_science_papers_exercises() -> list[Callable[[], bool | None]]
                     rag_response_validation_fn=validate_exercise_vdi_docs_3_fn),
             partial(display_exercise_rag,
                     task_text=task_4,
+                    question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
+                    rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
+                                                       task=task_4
+                                                       )),
+            partial(display_exercise_rag,
+                    task_text=task_5,
                     rag_response_validation_fn=partial(validate_exercise_science_papers_3_fn,
-                                                       task=task_4,
+                                                       task=task_5,
                                                        ),
                     include_all_relevant_meta_in_system_prompt=True)
             ]

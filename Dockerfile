@@ -11,11 +11,14 @@ ARG AZURE_OPENAI_ENDPOINT
 ARG AZURE_OPENAI_API_KEY
 # Define a build argument for the streamlit global password
 ARG STREAMLIT_PASSWORD
+# Define a build argument for using openai embedding model (otherwise all-MiniLM-L6-v2 is used)
+ARG USE_OPEN_AI_EMBEDDINGS
 # Define a build argument for optional files
 ARG FILES_URL=""
 # Set the environment variable in the container
 ENV AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT
 ENV AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY
+ENV USE_OPEN_AI_EMBEDDINGS=${USE_OPEN_AI_EMBEDDINGS:-true}
 
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
