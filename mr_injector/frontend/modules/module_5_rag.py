@@ -173,7 +173,7 @@ def validate_exercise_science_papers_1_fn(retrieved_docs: list[Document]):
 
 def validate_exercise_vdi_docs_2_fn(retrieved_docs: list[Document], response: str):
     if any([doc for doc in retrieved_docs if doc.meta["title"] == "Power-to-X - CO2 -Bereitstellung"]):
-        if "113.7" in response or "113,7" in response:
+        if "117.1" in response or "117,1" in response:
             return True
 
 def validate_exercise_science_papers_2_fn(retrieved_docs: list[Document], response: str):
