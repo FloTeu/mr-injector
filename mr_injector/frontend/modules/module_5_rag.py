@@ -80,7 +80,7 @@ def execute_rag(question, prompt, client: openai.OpenAI | openai.AzureOpenAI, re
     with st.spinner("Generate solution..."):
         template = Template(prompt)
         rendered_prompt = template.render(documents=retrieved_docs, question=question)
-        response = llm_call(client, "", rendered_prompt)
+        response = llm_call(client, system_prompt="", user_prompt=rendered_prompt)
 
     return retrieved_docs, response
 
@@ -207,7 +207,7 @@ Evaluate whether the following answer delimited by ``` fulfills the task "{task}
 The answer to the question is in the broadest sense "energy markets/smart grids" and "information systems for mobility".
 Answer with "yes" if the task is solved and "no" if not.
 Do not include any explanation."""
-    llm_answer = llm_call(client, system_prompt, f'answer: ```{response}```', model="gpt-4o-mini")
+    llm_answer = llm_call(client, system_prompt=system_prompt, user_prompt=f'answer: ```{response}```', model="gpt-4o-mini")
     return "yes" in llm_answer
 
 
@@ -218,7 +218,7 @@ Evaluate whether the following answer delimited by ``` fulfills the task "{task}
 The answer to the question should be that no document contains the relevant information..
 Answer with "yes" if the task is solved and "no" if not.
 Do not include any explanation."""
-    llm_answer = llm_call(client, system_prompt, f'answer: ```{response}```', model="gpt-4o-mini")
+    llm_answer = llm_call(client, system_prompt=system_prompt, user_prompt=f'answer: ```{response}```', model="gpt-4o-mini")
     return "yes" in llm_answer
 
 

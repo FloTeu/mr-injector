@@ -37,9 +37,9 @@ def display_exercise_prompt_injection(system_prompt: str,
     if st.button("Submit", key=f"prompt_submit_{hash_text(system_prompt)}"):
         with st.spinner():
             if isinstance(model, OpenRouterModels):
-                llm_answer = open_service_llm_call(system_prompt, user_prompt, model)
+                llm_answer = open_service_llm_call(system_prompt=system_prompt, user_prompt=user_prompt, model=model)
             else:
-                llm_answer = llm_call(client, system_prompt, user_prompt, model=model)
+                llm_answer = llm_call(client, system_prompt=system_prompt, user_prompt=user_prompt, model=model)
 
         st.write(f"LLM Answer: {llm_answer}")
         return validation_fn(llm_answer)
@@ -51,7 +51,7 @@ def validate_exercise_fn(response: str, task: str):
 Evaluate whether the following answer delimited by ``` fulfills the task "{task}". 
 Answer with "yes" if the task is solved and "no" if not.
 Do not include any explanation."""
-    llm_answer = llm_call(client, system_prompt, f'Model answer: ```{response}```', model=OpenAIModels.GPT_4o_MINI)
+    llm_answer = llm_call(client, system_prompt=system_prompt, user_prompt=f'Model answer: ```{response}```', model=OpenAIModels.GPT_4o_MINI)
     return "yes" in llm_answer
 
 

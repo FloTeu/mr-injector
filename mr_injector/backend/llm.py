@@ -17,7 +17,8 @@ load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
 
 
-def create_open_ai_client(api_key: str | None = None, azure_endpoint: str | None = None) -> openai.OpenAI | openai.AzureOpenAI:
+def create_open_ai_client(api_key: str | None = None,
+                          azure_endpoint: str | None = None) -> openai.OpenAI | openai.AzureOpenAI:
     api_key = api_key or API_KEY
     if api_key is None:
         raise ValueError("No API key defined")
@@ -33,7 +34,8 @@ def create_open_ai_client(api_key: str | None = None, azure_endpoint: str | None
         )
 
 
-def create_langchain_model(client: openai.OpenAI | openai.AzureOpenAI, model_name: str = "gpt-4o-mini") -> ChatOpenAI | AzureChatOpenAI:
+def create_langchain_model(client: openai.OpenAI | openai.AzureOpenAI,
+                           model_name: str = "gpt-4o-mini") -> ChatOpenAI | AzureChatOpenAI:
     # Create the agent
     if isinstance(client, openai.OpenAI):
         return ChatOpenAI(client=client, model_name=model_name)
@@ -41,11 +43,13 @@ def create_langchain_model(client: openai.OpenAI | openai.AzureOpenAI, model_nam
         return AzureChatOpenAI(client=client, deployment_name=model_name, model_name=model_name)
 
 
-def llm_call(client: openai.OpenAI | openai.AzureOpenAI, system_prompt: str, user_prompt: str, model: str = "gpt-4o-mini", output_model: Type[BaseModel] | None = None, messages: list[dict[str,str]] = None) -> str | BaseModel:
+def llm_call(client: openai.OpenAI | openai.AzureOpenAI, user_prompt: str, system_prompt: str | None = None,
+             model: str = "gpt-4o-mini", output_model: Type[BaseModel] | None = None,
+             messages: list[dict[str, str]] = None) -> str | BaseModel:
     messages = messages or []
     kwargs = {
         "model": model,  # Specify the model you want to use
-        "messages":  [
+        "messages": [
             *messages,
             {"role": "system", "content": system_prompt or ""},
             {"role": "user", "content": user_prompt}
@@ -67,25 +71,27 @@ def llm_call(client: openai.OpenAI | openai.AzureOpenAI, system_prompt: str, use
         return response.choices[0].message.content
 
 
-
-def open_service_llm_call(system_prompt: str, user_prompt: str, model: OpenRouterModels) -> str:
+def open_service_llm_call(user_prompt: str, model: OpenRouterModels, system_prompt: str | None = None,
+                          messages: list[dict[str, str]] = None) -> str:
+    messages = messages or []
     response = requests.post(
-      url="https://openrouter.ai/api/v1/chat/completions",
-      headers={
-        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY', '')}"
-      },
-      data=json.dumps({
-        "model": model,
-        "messages": [
-          {"role": "system", "content": system_prompt},
-          {"role": "user", "content": user_prompt}
-        ],
-        "top_p": 1,
-        "temperature": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "repetition_penalty": 1,
-        "top_k": 0,
-      })
+        url="https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY', '')}"
+        },
+        data=json.dumps({
+            "model": model,
+            "messages": [
+                *messages,
+                {"role": "system", "content": system_prompt or ""},
+                {"role": "user", "content": user_prompt}
+            ],
+            "top_p": 1,
+            "temperature": 1,
+            "frequency_penalty": 0,
+            "presence_penalty": 0,
+            "repetition_penalty": 1,
+            "top_k": 0,
+        })
     )
     return response.json()["choices"][0]["message"]["content"]

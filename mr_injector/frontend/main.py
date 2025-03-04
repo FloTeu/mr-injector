@@ -52,7 +52,7 @@ def display_llm_playground():
     user_prompt = st.text_area("**User prompt:**", key=f"user_prompt_introduction")
     if st.button("Submit", key=f"prompt_submit_introduction"):
         with st.spinner():
-            llm_answer = llm_call(client, system_prompt, user_prompt, model="gpt-4o-mini")
+            llm_answer = llm_call(client, system_prompt=system_prompt, user_prompt=user_prompt, model="gpt-4o-mini")
         st.write(f"LLM Answer:")
         st.text(llm_answer)  # , language="python")
 

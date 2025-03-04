@@ -45,7 +45,7 @@ def get_open_ai_client() -> OpenAI | None:
                                      azure_endpoint=azure_endpoint
                                      )
         try:
-            response = llm_call(client, "Write always ok as answer", "")
+            response = llm_call(client, system_prompt="Write always ok as answer", user_prompt="")
         except Exception as e:
             st.error("Wrong API key")
             return None
