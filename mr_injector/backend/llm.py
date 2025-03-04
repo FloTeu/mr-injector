@@ -5,7 +5,7 @@ import openai
 import os
 import requests
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, AzureOpenAI
+from langchain_openai import ChatOpenAI, AzureOpenAI, AzureChatOpenAI
 from pydantic import BaseModel
 
 from mr_injector.backend.models.llms import OpenRouterModels
@@ -33,16 +33,21 @@ def create_open_ai_client(api_key: str | None = None, azure_endpoint: str | None
         )
 
 
-def create_langchain_model(client: openai.OpenAI, model_name: str = "gpt-4o-mini") -> ChatOpenAI | AzureOpenAI:
+def create_langchain_model(client: openai.OpenAI | openai.AzureOpenAI, model_name: str = "gpt-4o-mini") -> ChatOpenAI | AzureChatOpenAI:
     # Create the agent
-    return ChatOpenAI(model_name=model_name)
+    if isinstance(client, openai.OpenAI):
+        return ChatOpenAI(client=client, model_name=model_name)
+    else:
+        return AzureChatOpenAI(client=client, deployment_name=model_name, model_name=model_name)
 
 
-def llm_call(client: openai.OpenAI | openai.AzureOpenAI, system_prompt: str, user_prompt: str, model: str = "gpt-4o-mini", output_model: Type[BaseModel] | None = None) -> str | BaseModel:
+def llm_call(client: openai.OpenAI | openai.AzureOpenAI, system_prompt: str, user_prompt: str, model: str = "gpt-4o-mini", output_model: Type[BaseModel] | None = None, messages: list[dict[str,str]] = None) -> str | BaseModel:
+    messages = messages or []
     kwargs = {
         "model": model,  # Specify the model you want to use
         "messages":  [
-            {"role": "system", "content": system_prompt},
+            *messages,
+            {"role": "system", "content": system_prompt or ""},
             {"role": "user", "content": user_prompt}
         ],
         "seed": 42,
