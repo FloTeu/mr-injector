@@ -9,6 +9,7 @@ class OpenRouterModels(BaseStrEnum):
     LLAMA_3_3_70B = "meta-llama/llama-3.3-70b-instruct"
     GROK = "x-ai/grok-2-1212"
     DEEPSEEK_LLAMA = "deepseek/deepseek-r1-distill-llama-70b"
+    DEEPSEEK_QWEN = "deepseek/deepseek-r1-distill-qwen-32b"
     DEEPSEEK_R1 = "deepseek/deepseek-r1"
     CLAUDE_V2 = "anthropic/claude-2.0"
 
