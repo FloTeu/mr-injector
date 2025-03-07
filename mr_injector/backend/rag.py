@@ -128,6 +128,12 @@ def get_default_document_set_context_prompt(document_set: RagDocumentSet,
     DOI: {{ document.meta["doi"] }}
     """ + extended_meta + """
 {% endfor %}"""
+    elif document_set == RagDocumentSet.RESUMES:
+        return """Documents:
+        {% for document in documents %}""" + """
+            Category: {{ document.meta["Category"] }}
+            Resume: {{ document.meta["Resume"] }}
+        {% endfor %}"""
     else:
         logging.warning(f"No system prompt defined for document_set {document_set}")
         return ""

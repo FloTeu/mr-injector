@@ -34,9 +34,15 @@ class SciencePaper(BaseModel):
   doi: str | None
 
 
+class ResumeDataSet(BaseModel):
+  """Defines a single citation"""
+  Category: str
+  Resume: str
+
 class RagDocumentSet(StrEnum):
   VDI_DOCS = auto()
   SCIENCE_PAPERS = auto()
+  RESUMES = auto()
 
   @classmethod
   def is_file(cls, doc_set):
