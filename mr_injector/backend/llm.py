@@ -5,7 +5,6 @@ import openai
 import os
 import requests
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, AzureOpenAI, AzureChatOpenAI
 from pydantic import BaseModel
 
 from mr_injector.backend.models.llms import OpenRouterModels
@@ -32,16 +31,6 @@ def create_open_ai_client(api_key: str | None = None,
         return openai.OpenAI(
             api_key=api_key,
         )
-
-
-def create_langchain_model(client: openai.OpenAI | openai.AzureOpenAI,
-                           model_name: str = "gpt-4o-mini") -> ChatOpenAI | AzureChatOpenAI:
-    # Create the agent
-    if isinstance(client, openai.OpenAI):
-        return ChatOpenAI(client=client, model_name=model_name)
-    else:
-        return AzureChatOpenAI(client=client, deployment_name=model_name, model_name=model_name)
-
 
 def llm_call(client: openai.OpenAI | openai.AzureOpenAI, user_prompt: str, system_prompt: str | None = None,
              model: str = "gpt-4o-mini", output_model: Type[BaseModel] | None = None,
