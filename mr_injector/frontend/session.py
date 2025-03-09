@@ -1,14 +1,15 @@
+import chromadb
 import streamlit as st
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import auto
 from typing import Self
 
 from openai import OpenAI, AzureOpenAI
 from openai.types.beta import Thread
-from pydantic import BaseModel
-from chromadb import Client as DBClient
+from chromadb import ClientAPI as DBClient
 
 from mr_injector.backend.models.base import BaseStrEnum
+from mr_injector.backend.models.db import DBCollection
 from mr_injector.backend.models.documents import Document
 from mr_injector.frontend.modules.main import ModuleView
 
@@ -33,9 +34,10 @@ class IndianaJonesAgentSession:
 class AppSession:
     modules: dict[ModuleNames, ModuleView]
     client: OpenAI | AzureOpenAI | None
-    db_client: DBClient
+    db_client: DBClient | None
     agent_session: IndianaJonesAgentSession | None = None
     resume: Document | None = None
+    db_collections: dict[DBCollection, chromadb.Collection] = field(default_factory=dict)
 
 
     def save_in_session(self) -> Self:

@@ -6,6 +6,7 @@ from openai import OpenAI
 
 import mr_injector
 from mr_injector.backend.llm import create_open_ai_client, llm_call
+from mr_injector.frontend.db import init_chroma_db_client_cached
 from mr_injector.frontend.session import AppSession, APP_SESSION_KEY
 
 
@@ -52,6 +53,7 @@ def get_open_ai_client() -> OpenAI | None:
         app_session: AppSession = st.session_state[APP_SESSION_KEY]
         if app_session.client is None:
             app_session.client = client
+            app_session.db_client = init_chroma_db_client_cached()
         return client
     else:
         return None
