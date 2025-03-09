@@ -14,7 +14,7 @@ from mr_injector.backend.models.documents import VDIDoc, SciencePaper, RagDocume
 from mr_injector.backend.utils import get_random_name
 
 
-def create_resume_documents(file_path: Path) -> List[Document]:
+def extract_resume_documents(file_path: Path, drop_duplicates: bool = True) -> List[Document]:
     assert file_path.exists(), "file does not exist"
     assert "csv" == file_path.name.split(".")[-1], "must be a .csv file"
     resume_df = pd.read_csv(file_path)
@@ -28,6 +28,10 @@ def create_resume_documents(file_path: Path) -> List[Document]:
             meta=resume.model_dump(),
             id=str(i)
         ))
+
+    if drop_duplicates:
+        docs = list(set(docs))
+
     return docs
 
 

@@ -16,6 +16,13 @@ class Document(BaseModel):
     meta: dict[str, Any]
     id: str | None = None
 
+
+    def __hash__(self):
+        return hash(self.content)
+
+    def __eq__(self, other):
+        return self.content == other.content
+
     @model_validator(mode='after')
     def ensure_id(self) -> Self:
         if self.id is None:
