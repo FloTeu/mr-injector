@@ -5,13 +5,33 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import List
-from haystack import Document
+
+import pandas as pd
+from haystack import Document as HDocument
 from haystack import Pipeline
 
-from mr_injector.backend.models.documents import VDIDoc, SciencePaper, RagDocumentSet
+from mr_injector.backend.models.documents import VDIDoc, SciencePaper, RagDocumentSet, Document, ResumeDataSet
+from mr_injector.backend.utils import get_random_name
 
 
-def create_haystack_vdi_documents(directory_path: Path | str) -> List[Document]:
+def create_resume_documents(file_path: Path) -> List[Document]:
+    assert file_path.exists(), "file does not exist"
+    assert "csv" == file_path.name.split(".")[-1], "must be a .csv file"
+    resume_df = pd.read_csv(file_path)
+    docs = []
+    for i, df_row in resume_df.iterrows():
+        content = df_row["Category"] + " " + df_row["Resume"]
+        random_name = get_random_name()
+        resume = ResumeDataSet(**{**df_row.to_dict(), "Name": random_name})
+        docs.append(Document(
+            content=content,
+            meta=resume.model_dump(),
+            id=str(i)
+        ))
+    return docs
+
+
+def create_haystack_vdi_documents(directory_path: Path | str) -> List[HDocument]:
     """
     Iterates over all JSON files in the specified directory and creates a list of Haystack 2.0 Documents.
 
@@ -37,7 +57,7 @@ def create_haystack_vdi_documents(directory_path: Path | str) -> List[Document]:
     return documents
 
 
-def create_haystack_bibtex_citations(file_path: Path | str) -> List[Document]:
+def create_haystack_bibtex_citations(file_path: Path | str) -> List[HDocument]:
     """
     Iterates over all entries in a bibtex file and creates a list of Haystack 2.0 Documents.
 
@@ -65,13 +85,13 @@ def create_haystack_bibtex_citations(file_path: Path | str) -> List[Document]:
               entry_type=entry['itemType'],
               doi=entry.get('DOI'))
           content = f"Title: {citation.title} Abstract: {citation.abstract} Tags: {citation.tags}"
-          doc = Document(content=content, meta=citation.dict())
+          doc = HDocument(content=content, meta=citation.dict())
           documents.append(doc)
 
           if len(citation.creators) > 0:
               creators_string = ", ".join([" ".join(c) for c in citation.creators])
               content = f"Creators: {creators_string}"
-              doc = Document(content=content, meta=citation.dict())
+              doc = HDocument(content=content, meta=citation.dict())
               documents.append(doc)
 
     return documents

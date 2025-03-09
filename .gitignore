@@ -1,0 +1,4 @@
+# ignore ALL .sqlite3 files
+*.sqlite3
+
+.venv

@@ -1,11 +1,26 @@
+import hashlib
 import logging
 from enum import StrEnum, auto
 from pathlib import Path
+from typing import Any, Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from datetime import date
 
 import mr_injector
+from mr_injector.backend.utils import hash_text
+
+
+class Document(BaseModel):
+    content: str = Field(description="Embedding input text")
+    meta: dict[str, Any]
+    id: str | None = None
+
+    @model_validator(mode='after')
+    def ensure_id(self) -> Self:
+        if self.id is None:
+            self.id = hash_text(self.content)
+        return self
 
 
 class VDIDoc(BaseModel):
@@ -38,6 +53,7 @@ class ResumeDataSet(BaseModel):
   """Defines a single citation"""
   Category: str
   Resume: str
+  Name: str
 
 class RagDocumentSet(StrEnum):
   VDI_DOCS = auto()
@@ -49,15 +65,27 @@ class RagDocumentSet(StrEnum):
     """Returns True if RagDocumentSet is a single file"""
     if doc_set == cls.SCIENCE_PAPERS:
       return True
+    elif doc_set == cls.RESUMES:
+      return True
     else:
       return False
+
+  @classmethod
+  def get_file_suffix(cls, doc_set):
+    """Returns True if RagDocumentSet is a single file"""
+    if doc_set == cls.SCIENCE_PAPERS:
+      return ".json"
+    elif doc_set == cls.RESUMES:
+      return ".csv"
+    else:
+      return ".json"
 
   @classmethod
   def to_list(cls):
     document_sets = []
     # return only available data sets
     for doc_set in list(map(lambda c: c.value, cls)):
-      file_suffix = ".json" if cls.is_file(cls(doc_set)) else ""
+      file_suffix = cls.get_file_suffix(cls(doc_set)) if cls.is_file(cls(doc_set)) else ""
       if (Path(mr_injector.__path__[0]).parent / f"files/{doc_set}{file_suffix}").exists():
         document_sets.append(doc_set)
       else:
@@ -65,5 +93,6 @@ class RagDocumentSet(StrEnum):
     return document_sets
 
   def get_path(self) -> Path:
-    file_suffix = ".json" if self.is_file(self) else ""
+    file_suffix = self.get_file_suffix(self) if self.is_file(self) else ""
     return Path(mr_injector.__path__[0]).parent / f"files/{self.value}{file_suffix}"
+
