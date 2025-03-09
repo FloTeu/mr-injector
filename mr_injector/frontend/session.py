@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from chromadb import Client as DBClient
 
 from mr_injector.backend.models.base import BaseStrEnum
+from mr_injector.backend.models.documents import Document
 from mr_injector.frontend.modules.main import ModuleView
 
 APP_SESSION_KEY = "app_session"
@@ -34,6 +35,7 @@ class AppSession:
     client: OpenAI | AzureOpenAI | None
     db_client: DBClient
     agent_session: IndianaJonesAgentSession | None = None
+    resume: Document | None = None
 
 
     def save_in_session(self) -> Self:

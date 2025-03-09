@@ -1,13 +1,19 @@
 import os
+
+import chromadb
 import torch
 import streamlit as st
 
 from functools import partial
 
+from chromadb.utils import embedding_functions
+
+from mr_injector.backend.db import create_chromadb_collection, init_chroma_db_client, add_to_collection
+from mr_injector.backend.models.db import DBCollection
 from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.llm import llm_call
+from mr_injector.backend.rag import extract_resume_documents
 from mr_injector.backend.utils import booleanize
-from mr_injector.frontend.db import init_chroma_db_client_cached
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
 from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
@@ -79,6 +85,26 @@ def display_module(module: ModuleView):
         module.display()
 
 
+@st.cache_resource
+def init_chroma_db_client_cached() -> chromadb.PersistentClient:
+    db_client = init_chroma_db_client()
+
+    sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
+    )
+    # create collection (and delete them first if they exist already)
+    resume_col = create_chromadb_collection(db_client, DBCollection.RESUMES, sentence_transformer_ef)
+    create_chromadb_collection(db_client, DBCollection.VDI_DOCS, sentence_transformer_ef)
+    create_chromadb_collection(db_client, DBCollection.SCIENCE_PAPERS, sentence_transformer_ef)
+
+    # fill up collection
+    file_path = RagDocumentSet.RESUMES.get_path()
+    docs = extract_resume_documents(file_path)
+    add_to_collection(docs, resume_col)
+
+    return db_client
+
+
 def init_app_session() -> AppSession:
     modules: dict[ModuleNames, ModuleView] = {}
     modules[ModuleNames.PROMPT_LEAKAGE] = get_module_prompt_leaking()
@@ -92,10 +118,11 @@ def init_app_session() -> AppSession:
         selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
         modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag()[selected_doc_set]
 
+    db_client = init_chroma_db_client_cached()
     return AppSession(
         modules=modules,
         client=None,
-        db_client=init_chroma_db_client_cached(),
+        db_client=db_client,
     ).save_in_session()
 
 

@@ -1,4 +1,7 @@
+from contextlib import suppress
+
 import chromadb
+from chromadb.errors import InvalidCollectionException
 
 from mr_injector.backend.models.documents import Document
 
@@ -6,9 +9,16 @@ from mr_injector.backend.models.documents import Document
 def init_chroma_db_client() -> chromadb.PersistentClient:
     return chromadb.PersistentClient(path="chroma_db")
 
+def delete_chromadb_collection(client: chromadb.Client(), col_name: str):
+    with suppress(ValueError):
+        client.delete_collection(name=col_name)
+
 def create_chromadb_collection(client: chromadb.Client(), col_name: str, embedding_function) -> chromadb.Collection:
+    # ensure collection does not already exist
+    delete_chromadb_collection(client, col_name)
+
     # Create or get existing collection
-    return client.get_or_create_collection(
+    return client.create_collection(
         name=col_name,
         embedding_function=embedding_function
     )
