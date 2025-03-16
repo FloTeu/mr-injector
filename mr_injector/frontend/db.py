@@ -15,25 +15,25 @@ def init_chroma_db_client_cached() -> chromadb.PersistentClient:
     if model_client is None:
         raise ValueError("model client is required")
     db_client = init_chroma_db_client()
-    # sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
-    #     model_name="all-MiniLM-L6-v2"
-    # )
+    init_db_cols(db_client, model_client)
+
+    return db_client
+
+
+def init_db_cols(db_client, model_client):
     embedding_function = OpenAIEmbeddingFunction(client=model_client)
     # create collection
     resume_col = create_chromadb_collection(db_client, DBCollection.RESUMES, embedding_function, ensure_new=False)
     vdi_doc_col = create_chromadb_collection(db_client, DBCollection.VDI_DOCS, embedding_function, ensure_new=False)
-    science_paper_col = create_chromadb_collection(db_client, DBCollection.SCIENCE_PAPERS, embedding_function, ensure_new=False)
-
+    science_paper_col = create_chromadb_collection(db_client, DBCollection.SCIENCE_PAPERS, embedding_function,
+                                                   ensure_new=False)
     # fill up collection
     if resume_col.count() == 0:
         file_path = RagDocumentSet.RESUMES.get_path()
         docs = extract_resume_documents(file_path)
         add_to_collection(docs, resume_col)
-
     st.session_state[APP_SESSION_KEY].db_collections = {
         DBCollection.RESUMES: resume_col,
         DBCollection.VDI_DOCS: vdi_doc_col,
         DBCollection.SCIENCE_PAPERS: science_paper_col
     }
-
-    return db_client

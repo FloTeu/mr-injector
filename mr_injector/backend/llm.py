@@ -7,7 +7,7 @@ import requests
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from mr_injector.backend.models.llms import OpenRouterModels
+from mr_injector.backend.models.llms import OpenRouterModels, OpenAIModels
 
 # loads environment files from .env file
 load_dotenv()
@@ -33,7 +33,7 @@ def create_open_ai_client(api_key: str | None = None,
         )
 
 def llm_call(client: openai.OpenAI | openai.AzureOpenAI, user_prompt: str, system_prompt: str | None = None,
-             model: str = "gpt-4o-mini", output_model: Type[BaseModel] | None = None,
+             model: OpenAIModels = "gpt-4o-mini", output_model: Type[BaseModel] | None = None,
              messages: list[dict[str, str]] = None) -> str | BaseModel:
     messages = messages or []
     kwargs = {
@@ -61,7 +61,7 @@ def llm_call(client: openai.OpenAI | openai.AzureOpenAI, user_prompt: str, syste
 
 
 def open_service_llm_call(user_prompt: str, model: OpenRouterModels, system_prompt: str | None = None,
-                          messages: list[dict[str, str]] = None) -> str:
+                          messages: list[dict[str, str]] = None, seed: int | None = 42) -> str:
     messages = messages or []
     response = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",
@@ -81,6 +81,7 @@ def open_service_llm_call(user_prompt: str, model: OpenRouterModels, system_prom
             "presence_penalty": 0,
             "repetition_penalty": 1,
             "top_k": 0,
+            "seed": seed,
         })
     )
     return response.json()["choices"][0]["message"]["content"]
