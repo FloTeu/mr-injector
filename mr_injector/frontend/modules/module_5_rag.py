@@ -287,7 +287,10 @@ def get_module_rag_science_papers_exercises() -> list[Callable[[], bool | None]]
 def get_module_view(exercises: list[Callable[[], bool | None]], session_key: str) -> ModuleView:
     return ModuleView(
         title="Retrieval Augmented Generation",
-        description="""### What is Retrieval Augmented Generation?""",
+        description="""### What is Retrieval Augmented Generation?
+Retrieval-Augmented Generation (RAG) boosts AI's accuracy and adaptability by merging pre-trained language models with real-time data retrieval from external sources (e.g., documents, databases). 
+It generates context-aware responses—think customer support, research, or content tasks—by dynamically pulling current or domain-specific information, reducing errors and ensuring relevance without retraining. 
+A practical, efficient solution for businesses needing trustworthy, up-to-date AI outputs.""",
         module_nr=MODULE_NR,
         session_key=session_key,
         data_selection_fn=display_data_selection,

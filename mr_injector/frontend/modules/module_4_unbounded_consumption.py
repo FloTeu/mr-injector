@@ -1,8 +1,12 @@
 import json
 import os
+from pathlib import Path
+
 import streamlit as st
 
 from functools import partial
+
+import mr_injector
 from mr_injector.backend.tools import search_web_via_tavily
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.backend.agent import get_tavily_agent
@@ -22,6 +26,10 @@ def get_tavily_api_key() -> str:
 
 
 def display_exercise_agent_ddos() -> bool | None:
+    image_path = Path(mr_injector.__file__).parent.parent / "files" / "UNBOUND_CONSUMPTION.png"
+    if image_path.exists():
+        st.image(image_path, use_container_width=True)
+
     client = st.session_state[APP_SESSION_KEY].client
     required_tool_calls = 6
     warning_placeholder = st.empty()

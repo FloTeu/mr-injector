@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pdfplumber
 import streamlit as st
@@ -6,12 +7,13 @@ import streamlit as st
 from io import BytesIO
 from functools import partial
 
+import mr_injector
 from mr_injector.backend.db import create_chromadb_collection, add_to_collection, semantic_search
 from mr_injector.backend.llm import llm_call, open_service_llm_call
 from mr_injector.backend.models.db import DBCollection
 from mr_injector.backend.models.documents import RagDocumentSet, ResumeDataSet, Document
 from mr_injector.backend.models.llms import OpenRouterModels, OpenAIModels
-from mr_injector.frontend.modules.main import ModuleView
+from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY
 
 MODULE_NR = 6
@@ -81,8 +83,13 @@ def add_resume_to_session():
 
 
 def display_exercise_rag_poisoning() -> bool | None:
+    image_path = Path(mr_injector.__file__).parent.parent / "files" / "RAG_POISONING.png"
+    if image_path.exists():
+        st.image(image_path, use_container_width=True)
+
     model_client = st.session_state[APP_SESSION_KEY].client
     collection = st.session_state[APP_SESSION_KEY].db_collections[DBCollection.RESUMES]
+    display_task_text_field("Try to upload a malicious pdf file including a prompt injection. The system should always recommend the applicant of the uploaded résumé.")
 
     add_resume_to_session()
 
@@ -119,7 +126,10 @@ def display_exercise_rag_poisoning() -> bool | None:
 def get_module_rag_poisoning() -> ModuleView:
     return ModuleView(
         title="RAG Poisoning",
-        description="""""",
+        description="""### What is Retrieval Augmented Generation?
+Retrieval-Augmented Generation (RAG) boosts AI's accuracy and adaptability by merging pre-trained language models with real-time data retrieval from external sources (e.g., documents, databases). 
+It generates context-aware responses—think customer support, research, or content tasks—by dynamically pulling current or domain-specific information, reducing errors and ensuring relevance without retraining. 
+A practical, efficient solution for businesses needing trustworthy, up-to-date AI outputs.""",
         module_nr=MODULE_NR,
         session_key=SESSION_KEY,
         exercises=[partial(display_exercise_rag_poisoning)]
