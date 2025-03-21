@@ -54,7 +54,7 @@ def create_haystack_vdi_documents(directory_path: Path | str) -> List[HDocument]
                 # Open and load the JSON file
                 with open(file_path, 'r', encoding='utf-8') as file:
                     vdi_doc = VDIDoc(**json.load(file))
-                    doc = Document(content=vdi_doc.abstract, meta=vdi_doc.dict())
+                    doc = HDocument(content=vdi_doc.abstract, meta=vdi_doc.dict())
                     documents.append(doc)
             except Exception as e:
                 print(f"Could not load json file {i} {filename}", str(e))

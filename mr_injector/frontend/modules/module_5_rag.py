@@ -229,6 +229,7 @@ def display_data_selection():
         app_session.modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag()[doc_set]
 
     available_document_sets = RagDocumentSet.to_list()
+    available_document_sets.remove(RagDocumentSet.RESUMES)
     if len(available_document_sets) == 0:
         st.error("Could not find any available document sets")
     st.selectbox("Documents", available_document_sets,
