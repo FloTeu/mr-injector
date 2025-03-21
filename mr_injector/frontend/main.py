@@ -99,7 +99,7 @@ def init_app_session() -> AppSession:
     ).save_in_session()
 
 
-if not booleanize(os.environ.get("DEBUG", False)):
+if not booleanize(os.environ.get("DEBUG", False)) and st.secrets.get("password", None):
     if not check_password():
         st.stop()  # Do not continue if check_password is not True.
 

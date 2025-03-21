@@ -62,6 +62,8 @@ To set up the project locally, follow these steps:
    # or with Azure OpenAI setup
    docker build --build-arg AZURE_OPENAI_ENDPOINT=<your-endpoint-url> --build-arg AZURE_OPENAI_API_KEY=<your-endpoint-api-key> -t mr-injector .
    ```
+Hint: If you are using podman ensure that the right linux platform for spacy is used e.g. `--platform linux/amd64`
+
 2. **Run docker container**
    ```bash
    docker run -p 8501:8501 mr-injector

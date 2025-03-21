@@ -55,6 +55,8 @@ fi
 RUN mkdir /app/.streamlit
 RUN bash -c 'if [ -n "$STREAMLIT_PASSWORD" ]; then \
         echo "password = \"$STREAMLIT_PASSWORD\"" > /app/.streamlit/secrets.toml; \
+    else \
+        touch /app/.streamlit/secrets.toml; \
     fi'
 
 
