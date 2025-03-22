@@ -1,7 +1,9 @@
 import os
-from functools import partial
 
+import torch
 import streamlit as st
+
+from functools import partial
 
 from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.llm import llm_call
@@ -12,10 +14,13 @@ from mr_injector.frontend.modules.module_2_prompt_injection import get_module_pr
 from mr_injector.frontend.modules.module_3_jailbreaking import get_module_jailbreak
 from mr_injector.frontend.modules.module_5_rag import get_module_rag, DATA_SELECTION_SESSION_KEY
 from mr_injector.frontend.modules.module_4_unbounded_consumption import get_module_unbounded_consumption
+from mr_injector.frontend.modules.module_6_rag_poisoning import get_module_rag_poisoning
 from mr_injector.frontend.security import check_password
 from mr_injector.frontend.session import AppSession, ModuleNames, APP_SESSION_KEY
 from mr_injector.frontend.views import display_header_row, display_module_progress_bar, get_open_ai_client
 
+# fixes: https://github.com/VikParuchuri/marker/issues/442
+torch.classes.__path__ = []
 
 def display_general(first_module: st.Page):
     client = display_open_ai_api_key_input()
@@ -79,6 +84,7 @@ def init_app_session() -> AppSession:
     modules[ModuleNames.PROMPT_LEAKAGE] = get_module_prompt_leaking()
     modules[ModuleNames.PROMPT_INJECTION] = get_module_prompt_injection()
     modules[ModuleNames.JAILBREAK] = get_module_jailbreak()
+    modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning()
     if os.environ.get("TAVILY_API_KEY"):
         modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption()
 
@@ -88,11 +94,12 @@ def init_app_session() -> AppSession:
 
     return AppSession(
         modules=modules,
-        client=None
+        client=None,
+        db_client=None,
     ).save_in_session()
 
 
-if not booleanize(os.environ.get("DEBUG", False)):
+if not booleanize(os.environ.get("DEBUG", False)) and st.secrets.get("password", None):
     if not check_password():
         st.stop()  # Do not continue if check_password is not True.
 

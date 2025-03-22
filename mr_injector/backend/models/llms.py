@@ -5,13 +5,14 @@ from pydantic import BaseModel
 from mr_injector.backend.models.base import BaseStrEnum
 
 class OpenRouterModels(BaseStrEnum):
-    LLAMA_3_2_1B = "meta-llama/llama-3.2-1b-instruct:free"
+    LLAMA_3_2_1B = "meta-llama/llama-3.2-1b-instruct"
     LLAMA_3_3_70B = "meta-llama/llama-3.3-70b-instruct"
     GROK = "x-ai/grok-2-1212"
     DEEPSEEK_LLAMA = "deepseek/deepseek-r1-distill-llama-70b"
     DEEPSEEK_QWEN = "deepseek/deepseek-r1-distill-qwen-32b"
     DEEPSEEK_R1 = "deepseek/deepseek-r1"
     CLAUDE_V2 = "anthropic/claude-2.0"
+    GEMINI_2_0_FLASH_THINKING = "google/gemini-2.0-flash-thinking-exp-1219:free"
 
 
     @classmethod

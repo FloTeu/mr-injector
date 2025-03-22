@@ -7,6 +7,8 @@ from openai import BadRequestError
 import streamlit as st
 import streamlit.components.v1 as components
 from streamlit.delta_generator import DeltaGenerator
+
+from mr_injector.backend.utils import is_debug
 from mr_injector.frontend.css import get_module_styling, get_exercise_styling
 
 
@@ -234,6 +236,9 @@ class ModuleView:
         except Exception as exp:
             print(exp)
             st.error(f"Error during rendering module: {self.title}")
+            if is_debug():
+                raise exp
+
 
     def render_exercise_with_level_selectbox(self) -> bool | None:
         #self.render_level_selectbox()

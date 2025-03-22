@@ -1,5 +1,7 @@
 import hashlib
 import os
+import random
+
 
 
 def booleanize(s: bool | str) -> bool:
@@ -24,3 +26,9 @@ def hash_text(text) -> str:
     hash_hex = hash_object.hexdigest()
 
     return hash_hex
+
+def get_random_name() -> str:
+    first_names=('John','Andy','Joe')
+    last_names=('Johnson','Smith','Williams')
+
+    return random.choice(first_names)+" "+random.choice(last_names)
