@@ -1,16 +1,19 @@
 
 from openai import pydantic_function_tool, OpenAI, AzureOpenAI
 from dotenv import load_dotenv
-from mr_injector.backend.tools import CallLLM, SearchWebViaTavily
+from mr_injector.backend.tools import CallLLM, SearchWebViaTavily, QuerySQLDB
 
 load_dotenv()
 
 
-def get_tavily_agent(client: OpenAI | AzureOpenAI, instructions: str, model: str= "gpt-4o-mini"):
+def get_web_agent(client: OpenAI | AzureOpenAI, instructions: str, include_db_tool: bool=False, model: str= "gpt-4o-mini"):
+    tools = [pydantic_function_tool(SearchWebViaTavily)]
+    if include_db_tool:
+        tools.append(pydantic_function_tool(QuerySQLDB))
     return client.beta.assistants.create(
         name="Web Agent",
         instructions=instructions,
-        tools=[pydantic_function_tool(SearchWebViaTavily)],
+        tools=tools,
         model=model,
     )
 
