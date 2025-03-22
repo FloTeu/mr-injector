@@ -1,3 +1,4 @@
+import os
 import time
 from dataclasses import dataclass
 from typing import Callable
@@ -8,7 +9,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from streamlit.delta_generator import DeltaGenerator
 
-from mr_injector.backend.utils import is_debug
+from mr_injector.backend.utils import is_debug, booleanize
 from mr_injector.frontend.css import get_module_styling, get_exercise_styling
 
 
@@ -195,7 +196,7 @@ class ModuleView:
         else:
             self.placeholder.clean_exercises()
         self.render_progress_bar()
-        if self.description:
+        if self.description and not booleanize(os.environ.get("PRESENTATION_MODE", False)):
             self.placeholder.info.info(self.description)
         if self.render_exercises_with_level_selectbox:
             self.render_level_selectbox()
@@ -249,8 +250,9 @@ class ModuleView:
     def render_exercise(self, exercise_index: int) -> bool | None:
         """Renders exercise and returns True if it was solved within this function call, or False if not"""
         session_solved = self.module_session().exercise_solved[exercise_index]
-        with self.exercise_placeholder(self.selected_exercise_index()).header:
-            _display_module_header(exercise_index + 1, "", session_solved, number_prefix="Exercise ")
+        if not booleanize(os.environ.get("PRESENTATION_MODE", False)):
+            with self.exercise_placeholder(self.selected_exercise_index()).header:
+                _display_module_header(exercise_index + 1, "", session_solved, number_prefix="Exercise ")
         # run exercise
         solved = self.exercises[exercise_index]()
         if solved is True and not session_solved:

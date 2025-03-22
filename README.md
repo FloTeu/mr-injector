@@ -42,6 +42,7 @@ To set up the project locally, follow these steps:
    # populate .env file with values
    ```
    If you run the app locally, set DEBUG to True.
+   Set `PRESENTATION_MODE` to True, if the ui should be more suitable for a lecture
 2. **Activate virtual environment**
    ```bash
    # execute this in root of the project

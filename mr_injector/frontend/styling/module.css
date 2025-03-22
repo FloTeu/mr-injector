@@ -9,7 +9,7 @@ body {
     display: flex;
     align-items: center;
     padding: 10px 20px;
-    background-color: #ffffff;
+    background-color: #061b59;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     justify-content: space-between; /* Space out children */
@@ -18,13 +18,13 @@ body {
 .module-number {
     font-size: 24px; /* Larger font size for emphasis */
     font-weight: bold; /* Bold font for visibility */
-    color: #007BFF; /* Blue color for the module number */
+    color: #7df381; /* Blue color for the module number */
     margin-right: 15px; /* Space between number and title */
 }
 
 .module-title {
     font-size: 20px; /* Slightly smaller than module number */
-    color: #333; /* Dark color for better readability */
+    color: #dfe5f0; /* Dark color for better readability */
 }
 
 .module-status {
