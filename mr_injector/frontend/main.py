@@ -13,7 +13,7 @@ from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prom
 from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
 from mr_injector.frontend.modules.module_3_jailbreaking import get_module_jailbreak
 from mr_injector.frontend.modules.module_5_rag import get_module_rag, DATA_SELECTION_SESSION_KEY
-from mr_injector.frontend.modules.module_4_unbounded_consumption import get_module_unbounded_consumption
+from mr_injector.frontend.modules.module_4_agents import get_module_unbounded_consumption, get_module_excessive_agency
 from mr_injector.frontend.modules.module_6_rag_poisoning import get_module_rag_poisoning
 from mr_injector.frontend.security import check_password
 from mr_injector.frontend.session import AppSession, ModuleNames, APP_SESSION_KEY
@@ -84,11 +84,12 @@ def init_app_session() -> AppSession:
     modules[ModuleNames.PROMPT_LEAKAGE] = get_module_prompt_leaking()
     modules[ModuleNames.PROMPT_INJECTION] = get_module_prompt_injection()
     modules[ModuleNames.JAILBREAK] = get_module_jailbreak()
-    modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning()
     if os.environ.get("TAVILY_API_KEY"):
         modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption()
+    modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency()
+    modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning()
 
-    if len(RagDocumentSet.to_list()) > 0:
+    if len(RagDocumentSet.to_list()) > 0 and not booleanize(os.environ.get("PRESENTATION_MODE", False)):
         selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
         modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag()[selected_doc_set]
 

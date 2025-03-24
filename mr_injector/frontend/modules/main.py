@@ -99,7 +99,7 @@ class ModuleView:
 
     def __init__(self,
                  title: str,
-                 module_nr: int,
+                 module_nr: int | float,
                  session_key: str,
                  exercises: list[Callable[[], bool | None]],
                  data_selection_fn: Callable[[], None] | None = None,

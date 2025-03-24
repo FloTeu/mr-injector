@@ -167,7 +167,7 @@ def call_agent(user_prompt: str,
         return False
 
 def display_exercise_agent_ddos() -> bool | None:
-    image_path = Path(mr_injector.__file__).parent.parent / "files" / "UNBOUND_CONSUMPTION.png"
+    image_path = Path(mr_injector.__file__).parent.parent / "files" / "AGENT_INJECTION.png"
     if image_path.exists():
         st.image(image_path, use_container_width=True)
 
@@ -191,7 +191,7 @@ def display_exercise_agent_ddos() -> bool | None:
 
 
 def display_exercise_agent_sql_injection() -> bool | None:
-    image_path = Path(mr_injector.__file__).parent.parent / "files" / "UNBOUND_CONSUMPTION.png"
+    image_path = Path(mr_injector.__file__).parent.parent / "files" / "AGENT_INJECTION.png"
     db_path = Path(mr_injector.__file__).parent.parent / "files" / "chinook.db"
     if image_path.exists():
         st.image(image_path, use_container_width=True)
@@ -235,6 +235,22 @@ The high computational demands of LLMs, especially in cloud environments, make t
         module_nr=MODULE_NR,
         session_key=SESSION_KEY,
         render_exercises_with_level_selectbox=True,
-        exercises=[partial(display_exercise_agent_ddos), display_exercise_agent_sql_injection]
+        exercises=[partial(display_exercise_agent_ddos)]
+    )
+
+def get_module_excessive_agency() -> ModuleView:
+    return ModuleView(
+        title="Excessive Agency",
+        description="""### What is Excessive Agency?
+An LLM-based system is often granted a degree of agency by its developer - the ability to call \
+functions or interface with other systems via extensions (sometimes referred to as tools, skills or \
+plugins by different vendors) to undertake actions in response to a prompt. The decision over \
+which extension to invoke may also be delegated to an LLM 'agent' to dynamically determine based \
+on input prompt or LLM output. Agent-based systems will typically make repeated calls to an LLM \
+using output from previous invocations to ground and direct subsequent invocations.""",
+        module_nr=MODULE_NR + 0.5,
+        session_key=SESSION_KEY + ".5",
+        render_exercises_with_level_selectbox=True,
+        exercises=[display_exercise_agent_sql_injection]
     )
 

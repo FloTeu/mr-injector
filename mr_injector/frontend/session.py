@@ -20,6 +20,7 @@ class ModuleNames(BaseStrEnum):
     PROMPT_INJECTION = auto()
     JAILBREAK = auto()
     UNBOUNDED_CONSUMPTION = auto()
+    EXCESSIVE_AGENCY = auto()
     RETRIEVAL_AUGMENTED_GENERATION = auto()
     RETRIEVAL_AUGMENTED_GENERATION_POISONING = auto()
 
