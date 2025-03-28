@@ -265,6 +265,7 @@ class ModuleView:
             with self.exercise_placeholder(exercise_index).success_message:
                 st.success("🎉 Congratulations you solved the exercise!")
             # update exercise header if solved
-            with self.exercise_placeholder(self.selected_exercise_index()).header:
-                _display_module_header(exercise_index + 1, "", True, number_prefix="Exercise ")
+            if not booleanize(os.environ.get("PRESENTATION_MODE", False)):
+                with self.exercise_placeholder(self.selected_exercise_index()).header:
+                    _display_module_header(exercise_index + 1, "", True, number_prefix="Exercise ")
         return solved

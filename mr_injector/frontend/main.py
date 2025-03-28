@@ -9,12 +9,12 @@ from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.llm import llm_call
 from mr_injector.backend.utils import booleanize
 from mr_injector.frontend.modules.main import ModuleView
-from mr_injector.frontend.modules.module_1_prompt_leaking import get_module_prompt_leaking
-from mr_injector.frontend.modules.module_2_prompt_injection import get_module_prompt_injection
-from mr_injector.frontend.modules.module_3_jailbreaking import get_module_jailbreak
-from mr_injector.frontend.modules.module_5_rag import get_module_rag, DATA_SELECTION_SESSION_KEY
-from mr_injector.frontend.modules.module_4_agents import get_module_unbounded_consumption, get_module_excessive_agency
-from mr_injector.frontend.modules.module_6_rag_poisoning import get_module_rag_poisoning
+from mr_injector.frontend.modules.module_prompt_leaking import get_module_prompt_leaking
+from mr_injector.frontend.modules.module_prompt_injection import get_module_prompt_injection
+from mr_injector.frontend.modules.module_jailbreaking import get_module_jailbreak
+from mr_injector.frontend.modules.module_rag import get_module_rag, DATA_SELECTION_SESSION_KEY
+from mr_injector.frontend.modules.module_agents import get_module_unbounded_consumption, get_module_excessive_agency
+from mr_injector.frontend.modules.module_rag_poisoning import get_module_rag_poisoning
 from mr_injector.frontend.security import check_password
 from mr_injector.frontend.session import AppSession, ModuleNames, APP_SESSION_KEY
 from mr_injector.frontend.views import display_header_row, display_module_progress_bar, get_open_ai_client

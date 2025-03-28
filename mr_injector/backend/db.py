@@ -27,11 +27,11 @@ class OpenAIEmbeddingFunction(EmbeddingFunction):
 def init_chroma_db_client() -> chromadb.PersistentClient:
     return chromadb.PersistentClient(path="chroma_db")
 
-def delete_chromadb_collection(client: chromadb.Client(), col_name: str):
+def delete_chromadb_collection(client, col_name: str):
     with suppress(ValueError):
         client.delete_collection(name=col_name)
 
-def create_chromadb_collection(client: chromadb.Client(), col_name: str, embedding_function, ensure_new: bool = False) -> chromadb.Collection:
+def create_chromadb_collection(client, col_name: str, embedding_function, ensure_new: bool = False) -> chromadb.Collection:
     # ensure collection does not already exist
     if ensure_new:
         delete_chromadb_collection(client, col_name)

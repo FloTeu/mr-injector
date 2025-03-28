@@ -1,8 +1,10 @@
 import os
+import pyperclip
 from pathlib import Path
 
 import streamlit as st
 from openai import OpenAI
+from streamlit.components.v1 import html
 
 import mr_injector
 from mr_injector.backend.llm import create_open_ai_client, llm_call
@@ -59,3 +61,8 @@ def get_open_ai_client() -> OpenAI | None:
         return client
     else:
         return None
+
+def display_copy_to_clipboard_button(text_to_copy: str, button_text: str = "Copy to Clipboard"):
+    # Create a button that triggers the copy functionality
+    if st.button(button_text, key="copy_button"):
+        pyperclip.copy(text_to_copy)

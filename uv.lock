@@ -1589,6 +1589,7 @@ dependencies = [
     { name = "llm-guard" },
     { name = "openai" },
     { name = "pdfplumber" },
+    { name = "pyperclip" },
     { name = "python-dotenv" },
     { name = "sentence-transformers" },
     { name = "streamlit" },
@@ -1601,6 +1602,7 @@ requires-dist = [
     { name = "llm-guard", specifier = ">=0.3.15" },
     { name = "openai", specifier = ">=1.58.1" },
     { name = "pdfplumber", specifier = ">=0.11.5" },
+    { name = "pyperclip", specifier = ">=1.9.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "sentence-transformers", specifier = ">=3.4.1" },
     { name = "streamlit", specifier = ">=1.41.1" },
@@ -2953,6 +2955,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a4/f3/8d3a350efb4286b5ebdabcf6736f51d8e3b10dbe68804c6930b00f5cf329/pypdfium2-4.30.1-py3-none-win_amd64.whl", hash = "sha256:598a7f20264ab5113853cba6d86c4566e4356cad037d7d1f849c8c9021007e05", size = 2960157 },
     { url = "https://files.pythonhosted.org/packages/e1/6b/2706497c86e8d69fb76afe5ea857fe1794621aa0f3b1d863feb953fe0f22/pypdfium2-4.30.1-py3-none-win_arm64.whl", hash = "sha256:c2b6d63f6d425d9416c08d2511822b54b8e3ac38e639fc41164b1d75584b3a8c", size = 2814810 },
 ]
+
+[[package]]
+name = "pyperclip"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/23/2f0a3efc4d6a32f3b63cdff36cd398d9701d26cda58e3ab97ac79fb5e60d/pyperclip-1.9.0.tar.gz", hash = "sha256:b7de0142ddc81bfc5c7507eea19da920b92252b548b96186caf94a5e2527d310", size = 20961 }
 
 [[package]]
 name = "pypika"
