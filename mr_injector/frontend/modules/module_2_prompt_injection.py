@@ -12,9 +12,6 @@ from mr_injector.frontend.modules.main import ModuleView, display_task_text_fiel
 from mr_injector.frontend.views import display_module_progress_bar, display_header_row
 from mr_injector.frontend.session import APP_SESSION_KEY, AppSession, ModuleNames
 
-MODULE_NR = 2
-SESSION_KEY = f"module_{MODULE_NR}"
-
 
 def display_exercise_prompt_injection(system_prompt: str,
                                        validation_fn: Callable[[str], bool],
@@ -55,7 +52,7 @@ Do not include any explanation."""
     return "yes" in llm_answer
 
 
-def get_module_prompt_injection() -> ModuleView:
+def get_module_prompt_injection(module_nr: int) -> ModuleView:
     task_1 = "Let the model say something about the german city Darmstadt."
     exercises = [
         partial(display_exercise_prompt_injection,
@@ -75,8 +72,8 @@ A Prompt Injection Vulnerability occurs when user prompts alter the LLM’s beha
 unintended ways. These inputs can affect the model even if they are imperceptible to humans,
 therefore prompt injections do not need to be human-visible/readable, as long as the content is
 parsed by the model.""",
-        module_nr=MODULE_NR,
-        session_key=SESSION_KEY,
+        module_nr=module_nr,
+        session_key=f"module_{module_nr}",
         exercises=exercises,
         render_exercises_with_level_selectbox=True,
         jump_to_next_level=False,

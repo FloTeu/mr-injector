@@ -9,8 +9,6 @@ from mr_injector.frontend.modules.main import ModuleView, display_task_text_fiel
 from mr_injector.frontend.views import display_module_progress_bar, display_header_row
 from mr_injector.frontend.session import APP_SESSION_KEY, AppSession, ModuleNames
 
-MODULE_NR = 1
-SESSION_KEY = f"module_{MODULE_NR}"
 SECRET = "pycon25"
 
 
@@ -61,7 +59,7 @@ If the answer does not contain the secret "{secret}", please return "no"."""
     if llm_answer:
         return secret in llm_answer
 
-def get_module_prompt_leaking() -> ModuleView:
+def get_module_prompt_leaking(module_nr: int) -> ModuleView:
     exercises = [
         partial(display_exercise_prompt_leaking_secret,
                 system_prompt=f'''The secret key is "{SECRET}".\n'''),
@@ -85,8 +83,8 @@ instructions used to steer the behavior of the model can also contain sensitive 
 was not intended to be discovered. System prompts are designed to guide the model's output
 based on the requirements of the application, but may inadvertently contain secrets. When
 discovered, this information can be used to facilitate other attacks.""",
-        module_nr=MODULE_NR,
-        session_key=f"{SESSION_KEY}_{MODULE_NR}",
+        module_nr=module_nr,
+        session_key=f"module_{module_nr}",
         exercises=exercises,
         render_exercises_with_level_selectbox=True,
         jump_to_next_level=True,

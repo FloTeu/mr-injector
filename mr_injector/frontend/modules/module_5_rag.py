@@ -25,8 +25,6 @@ from mr_injector.frontend.css import get_exercise_styling
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY, ModuleNames, AppSession
 
-MODULE_NR = 5
-SESSION_KEY = f"module_{MODULE_NR}"
 DATA_SELECTION_SESSION_KEY = "rag_document_set_selectbox"
 
 DOCUMENT_STORE_CACHE: dict[RagDocumentSet, InMemoryDocumentStore] = {}
@@ -285,14 +283,14 @@ def get_module_rag_science_papers_exercises() -> list[Callable[[], bool | None]]
             ]
 
 
-def get_module_view(exercises: list[Callable[[], bool | None]], session_key: str) -> ModuleView:
+def get_module_view(exercises: list[Callable[[], bool | None]], session_key: str, module_nr: int) -> ModuleView:
     return ModuleView(
         title="Retrieval Augmented Generation",
         description="""### What is Retrieval Augmented Generation?
 Retrieval-Augmented Generation (RAG) boosts AI's accuracy and adaptability by merging pre-trained language models with real-time data retrieval from external sources (e.g., documents, databases). 
 It generates context-aware responses—think customer support, research, or content tasks—by dynamically pulling current or domain-specific information, reducing errors and ensuring relevance without retraining. 
 A practical, efficient solution for businesses needing trustworthy, up-to-date AI outputs.""",
-        module_nr=MODULE_NR,
+        module_nr=module_nr,
         session_key=session_key,
         data_selection_fn=display_data_selection,
         exercises=exercises,
@@ -300,8 +298,9 @@ A practical, efficient solution for businesses needing trustworthy, up-to-date A
     )
 
 
-def get_module_rag() -> dict[RagDocumentSet, ModuleView]:
+def get_module_rag(module_nr: int) -> dict[RagDocumentSet, ModuleView]:
+    session_key=f"module_{module_nr}"
     return {
-        RagDocumentSet.VDI_DOCS: get_module_view(get_module_rag_vdi_exercises(), session_key=f"{SESSION_KEY}_{RagDocumentSet.VDI_DOCS}"),
-        RagDocumentSet.SCIENCE_PAPERS: get_module_view(get_module_rag_science_papers_exercises(), session_key=f"{SESSION_KEY}_{RagDocumentSet.SCIENCE_PAPERS}")
+        RagDocumentSet.VDI_DOCS: get_module_view(get_module_rag_vdi_exercises(), session_key=f"{session_key}_{RagDocumentSet.VDI_DOCS}", module_nr=module_nr),
+        RagDocumentSet.SCIENCE_PAPERS: get_module_view(get_module_rag_science_papers_exercises(), session_key=f"{session_key}_{RagDocumentSet.SCIENCE_PAPERS}", module_nr=module_nr)
     }
