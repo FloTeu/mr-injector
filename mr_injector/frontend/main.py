@@ -84,10 +84,10 @@ def init_app_session() -> AppSession:
     modules[ModuleNames.PROMPT_LEAKAGE] = get_module_prompt_leaking(1)
     modules[ModuleNames.PROMPT_INJECTION] = get_module_prompt_injection(2)
     modules[ModuleNames.JAILBREAK] = get_module_jailbreak(3)
+    modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning(4)
     if os.environ.get("TAVILY_API_KEY"):
-        modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(4)
-    modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency(5)
-    modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning(6)
+        modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(5)
+    modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency(6)
 
     if len(RagDocumentSet.to_list()) > 0 and not booleanize(os.environ.get("PRESENTATION_MODE", False)):
         selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)

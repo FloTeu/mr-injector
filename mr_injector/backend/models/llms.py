@@ -25,6 +25,7 @@ class OpenRouterModels(BaseStrEnum):
 class OpenAIModels(BaseStrEnum):
     GPT_35_TURBO = "gpt-3.5-turbo"
     GPT_4o_MINI = "gpt-4o-mini"
+    GPT_4o = "gpt-4o"
 
 class LLMValidationResult(StrEnum):
     YES = auto()

@@ -12,6 +12,7 @@ from streamlit.delta_generator import DeltaGenerator
 from mr_injector.backend.utils import is_debug, booleanize
 from mr_injector.frontend.css import get_module_styling, get_exercise_styling
 
+SELECTED_LEVEL_SESSION_KEY = "selected_level"
 
 @dataclass
 class ModuleSession:
@@ -166,7 +167,9 @@ class ModuleView:
         return self.placeholder.exercise_placeholders[exercise_index]
 
     def selected_level(self) -> int:
-        return st.session_state.get("selected_level", 0)
+        if len(self.exercises) == 1:
+            return 1
+        return st.session_state.get(SELECTED_LEVEL_SESSION_KEY, 0)
 
     def selected_exercise_index(self) -> int:
         return self.selected_level() - 1
@@ -176,7 +179,7 @@ class ModuleView:
         with self.placeholder.levels:
             levels = [i + 1 for i in range(len(self.exercises))]
             st.selectbox("Level", levels, index=self.get_first_not_solved_exercise_index(),
-                                      key="selected_level")
+                                      key=SELECTED_LEVEL_SESSION_KEY)
 
     def render_progress_bar(self):
         percentage_solved = 0
@@ -195,10 +198,11 @@ class ModuleView:
             self.init_placeholders()
         else:
             self.placeholder.clean_exercises()
-        self.render_progress_bar()
+        if len(self.exercises) > 1:
+            self.render_progress_bar()
         if self.description and not booleanize(os.environ.get("PRESENTATION_MODE", False)):
             self.placeholder.info.info(self.description)
-        if self.render_exercises_with_level_selectbox:
+        if self.render_exercises_with_level_selectbox and len(self.exercises) > 1:
             self.render_level_selectbox()
         if self.data_selection_fn:
             with self.placeholder.data_selection:
