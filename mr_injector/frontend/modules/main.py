@@ -176,11 +176,14 @@ class ModuleView:
     def selected_exercise_index(self) -> int:
         return self.selected_level() - 1
 
+    def increment_selected_level(self):
+        st.session_state[SELECTED_LEVEL_SESSION_KEY] = self.selected_level() + 1
+
     def render_level_selectbox(self):
         self.placeholder.levels.empty()
         with self.placeholder.levels:
             levels = [i + 1 for i in range(len(self.exercises))]
-            st.selectbox("Level", levels, index=self.get_first_not_solved_exercise_index(),
+            st.selectbox("Level", levels, index=self.get_first_not_solved_exercise_index() if self.jump_to_next_level else 0,
                                       key=SELECTED_LEVEL_SESSION_KEY)
 
     def render_progress_bar(self):
@@ -231,7 +234,7 @@ class ModuleView:
                     _display_start_next_level_loading_bar()
                     st.rerun()
                 else:
-                    st.button("Start next level")
+                    st.button("Start next level", on_click=self.increment_selected_level)
 
             # update module header if solved
             if self.is_solved():

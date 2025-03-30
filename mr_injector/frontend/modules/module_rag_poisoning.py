@@ -15,6 +15,7 @@ from mr_injector.backend.llm import llm_call, open_service_llm_call
 from mr_injector.backend.models.db import DBCollection
 from mr_injector.backend.models.documents import RagDocumentSet, ResumeDataSet, Document
 from mr_injector.backend.models.llms import OpenRouterModels, OpenAIModels
+from mr_injector.backend.utils import is_presentation_mode
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY
 
@@ -57,7 +58,7 @@ def add_resume_to_session():
     with st.form("Upload Resume"):
         uploaded_file = st.file_uploader('Choose your .pdf file', type="pdf")
 
-        category = st.text_input("Job Title")
+        category = "Data Scientist" if is_presentation_mode() else st.text_input("Job Title")
         name = st.text_input("Applicant Name")
 
         # Every form must have a submit button.

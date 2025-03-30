@@ -82,8 +82,8 @@ def display_module(module: ModuleView):
 def init_app_session() -> AppSession:
     modules: dict[ModuleNames, ModuleView] = {}
     modules[ModuleNames.PROMPT_LEAKAGE] = get_module_prompt_leaking(1)
-    modules[ModuleNames.PROMPT_INJECTION] = get_module_prompt_injection(2)
-    modules[ModuleNames.JAILBREAK] = get_module_jailbreak(3)
+    modules[ModuleNames.JAILBREAK] = get_module_jailbreak(2)
+    modules[ModuleNames.PROMPT_INJECTION] = get_module_prompt_injection(3)
     modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning(4)
     if os.environ.get("TAVILY_API_KEY"):
         modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(5)

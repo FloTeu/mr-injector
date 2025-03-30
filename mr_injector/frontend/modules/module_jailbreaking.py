@@ -2,10 +2,12 @@ import json
 import os
 from copy import deepcopy
 from functools import partial
+from pathlib import Path
 from typing import Callable
 
 import streamlit as st
 
+import mr_injector
 from mr_injector.backend.agent import get_jailbreaking_agent
 from mr_injector.backend.llm import llm_call, open_service_llm_call
 from mr_injector.backend.models.llms import OpenAIModels, OpenRouterModels, LLMValidationOutput
@@ -94,6 +96,9 @@ def display_indiana_jones_method(
 ) -> bool | None:
     app_session = st.session_state[APP_SESSION_KEY]
     client = app_session.client
+    image_path = Path(mr_injector.__file__).parent.parent / "files" / f"slidedeck_indiana_jones.jpg"
+    if image_path.exists():
+        st.image(image_path, use_container_width=True)
     if st.button("Reset Indiana Jones Agent", icon="🔄"):
         create_agent(app_session, client)
 
