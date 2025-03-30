@@ -84,7 +84,8 @@ def add_resume_to_session():
 
 
 def display_exercise_rag_poisoning() -> bool | None:
-    image_path = Path(mr_injector.__file__).parent.parent / "files" / "RAG_POISONING.png"
+    run_scan = st.toggle("Add Prompt Injection Scan")
+    image_path = Path(mr_injector.__file__).parent.parent / "files" / f"RAG_POISONING{'_2' if run_scan else ''}.jpg"
     if image_path.exists():
         st.image(image_path, use_container_width=True)
 
@@ -92,7 +93,6 @@ def display_exercise_rag_poisoning() -> bool | None:
     collection = st.session_state[APP_SESSION_KEY].db_collections[DBCollection.RESUMES]
     display_task_text_field("Try to upload a malicious pdf file including a prompt injection. The system should always recommend the applicant of the uploaded résumé.")
 
-    run_scan = st.toggle("Add Prompt Injection Scan")
     add_resume_to_session()
 
     injected_applicant = st.session_state[APP_SESSION_KEY].resume
