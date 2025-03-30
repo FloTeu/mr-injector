@@ -106,6 +106,7 @@ class ModuleView:
                  data_selection_fn: Callable[[], None] | None = None,
                  render_exercises_with_level_selectbox: bool = False,
                  jump_to_next_level: bool = False,
+                 show_solved_message_by_session: bool = False,
                  description: str = ""):
         self.title = title
         self.description = description
@@ -114,6 +115,7 @@ class ModuleView:
         self.exercises = exercises
         self.render_exercises_with_level_selectbox = render_exercises_with_level_selectbox
         self.jump_to_next_level = jump_to_next_level
+        self.show_solved_message_by_session = show_solved_message_by_session
         self.data_selection_fn = data_selection_fn
         self.placeholder: ModulePlaceholder | None = None
 
@@ -224,7 +226,7 @@ class ModuleView:
                     st.divider()
 
             # auto jump to next level
-            if self.render_exercises_with_level_selectbox and was_solved:
+            if self.render_exercises_with_level_selectbox and was_solved and len(self.exercises) > 1:
                 if self.jump_to_next_level:
                     _display_start_next_level_loading_bar()
                     st.rerun()
@@ -257,7 +259,7 @@ class ModuleView:
         solved = self.exercises[exercise_index]()
         if solved is True and not session_solved:
             self.module_session().exercise_solved[exercise_index] = True
-        if solved or session_solved:
+        if solved or (session_solved if self.show_solved_message_by_session else False):
             with self.exercise_placeholder(exercise_index).success_message:
                 st.success("🎉 Congratulations you solved the exercise!")
             # update exercise header if solved

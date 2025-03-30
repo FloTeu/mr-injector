@@ -24,7 +24,7 @@ def create_open_ai_client(api_key: str | None = None,
     if azure_endpoint:
         return openai.AzureOpenAI(
             api_key=api_key,
-            api_version="2024-10-21",
+            api_version="2024-08-01-preview",
             azure_endpoint=azure_endpoint
         )
     else:
