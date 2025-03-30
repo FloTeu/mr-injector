@@ -1,11 +1,15 @@
+import zipfile
 from contextlib import suppress
 
 import chromadb
+import requests
 from chromadb import EmbeddingFunction, Documents, Embeddings
 from chromadb.errors import UniqueConstraintError
 from openai import OpenAI, AzureOpenAI, embeddings
 
 from mr_injector.backend.models.documents import Document
+from mr_injector.backend.utils import get_root_dir
+
 
 class OpenAIEmbeddingFunction(EmbeddingFunction):
     def __init__(self, client: OpenAI | AzureOpenAI, model: str = "text-embedding-ada-002"):
@@ -67,5 +71,19 @@ def semantic_search(collection: chromadb.Collection, query: str, n_results: int 
     )
     return results
 
+def download_chinebook_db():
+    url = "https://storage.googleapis.com/inovex-prompt-engineering-seminar/chinook.zip"
+
+    response = requests.get(url)
+    files_dir = get_root_dir() / f"files"
+    zip_file_path = files_dir / f"chinook.zip"
+
+    # Save the ZIP file to the specified path
+    with open(zip_file_path, 'wb') as f:
+        f.write(response.content)
+
+    # Unpack the ZIP file
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        zip_ref.extractall(files_dir)
 
 

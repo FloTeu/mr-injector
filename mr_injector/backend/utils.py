@@ -1,8 +1,13 @@
 import hashlib
 import os
 import random
+from pathlib import Path
+
+import mr_injector
 
 
+def get_root_dir() -> Path:
+    return Path(mr_injector.__path__[0]).parent
 
 def booleanize(s: bool | str) -> bool:
     if isinstance(s, bool):

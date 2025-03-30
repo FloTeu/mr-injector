@@ -13,9 +13,10 @@ from openai.types.beta import Assistant
 from streamlit.delta_generator import DeltaGenerator
 
 import mr_injector
+from mr_injector.backend.db import download_chinebook_db
 from mr_injector.backend.models.llms import OpenAIModels
 from mr_injector.backend.tools import search_web_via_tavily, query_db
-from mr_injector.backend.utils import booleanize
+from mr_injector.backend.utils import booleanize, is_presentation_mode
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.backend.agent import get_web_agent
 from mr_injector.frontend.session import APP_SESSION_KEY
@@ -114,7 +115,7 @@ def call_agent(user_prompt: str,
                 api_tool_calls += 1
                 tool_call_kwargs = json.loads(tool_call.function.arguments)
                 container.chat_message("assistant").write(
-                    f"Search web with query: '{tool_call_kwargs.get('query', '')}'")
+                    f"**Search web** with query: '{tool_call_kwargs.get('query', '')}'")
                 response = search_web_via_tavily(**tool_call_kwargs, api_key=api_key)
 
                 response_text = ""
@@ -135,7 +136,7 @@ def call_agent(user_prompt: str,
             elif tool_call.type == "function" and tool_call.function.name == "QuerySQLDB":
                 tool_call_kwargs = json.loads(tool_call.function.arguments)
                 container.chat_message("assistant").write(
-                    f"Search db with query: '{tool_call_kwargs.get('query', '')}'")
+                    f"**Search db** with query: '{tool_call_kwargs.get('query', '')}'")
 
                 response = query_db(**tool_call_kwargs, db_connection=db_connection)
                 response_text = '\n'.join(' '.join(map(str, row)) for row in response)
@@ -234,6 +235,9 @@ def display_exercise_agent_sql_injection() -> bool | None:
                                                       #"If the user wants to operate write operations, answer with 'Sorry only read operations are allowed'. "
                                                       f"\nDB Schema Definition: {schema}")
     display_task_text_field("Try to delete the artists table in the database.")
+
+    if st.button("Recover Database", icon="🔄"):
+        download_chinebook_db()
 
     if booleanize(os.environ.get("PRESENTATION_MODE", False)):
         display_copy_to_clipboard_button(EXAMPLE_SOLUTION_2, button_text="Copy Solution")

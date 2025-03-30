@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 from datetime import date
 
 import mr_injector
-from mr_injector.backend.utils import hash_text
+from mr_injector.backend.utils import hash_text, get_root_dir
 
 
 class Document(BaseModel):
@@ -93,7 +93,7 @@ class RagDocumentSet(StrEnum):
     # return only available data sets
     for doc_set in list(map(lambda c: c.value, cls)):
       file_suffix = cls.get_file_suffix(cls(doc_set)) if cls.is_file(cls(doc_set)) else ""
-      if (Path(mr_injector.__path__[0]).parent / f"files/{doc_set}{file_suffix}").exists():
+      if (get_root_dir() / f"files/{doc_set}{file_suffix}").exists():
         document_sets.append(doc_set)
       else:
         logging.warning(f"Could not find document set {doc_set}")
@@ -101,5 +101,5 @@ class RagDocumentSet(StrEnum):
 
   def get_path(self) -> Path:
     file_suffix = self.get_file_suffix(self) if self.is_file(self) else ""
-    return Path(mr_injector.__path__[0]).parent / f"files/{self.value}{file_suffix}"
+    return get_root_dir() / f"files/{self.value}{file_suffix}"
 
