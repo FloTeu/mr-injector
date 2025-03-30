@@ -9,7 +9,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from streamlit.delta_generator import DeltaGenerator
 
-from mr_injector.backend.utils import is_debug, booleanize
+from mr_injector.backend.utils import is_debug, booleanize, is_presentation_mode
 from mr_injector.frontend.css import get_module_styling, get_exercise_styling
 
 SELECTED_LEVEL_SESSION_KEY = "selected_level"
@@ -200,7 +200,7 @@ class ModuleView:
             self.placeholder.clean_exercises()
         if len(self.exercises) > 1:
             self.render_progress_bar()
-        if self.description and not booleanize(os.environ.get("PRESENTATION_MODE", False)):
+        if self.description and not is_presentation_mode():
             self.placeholder.info.info(self.description)
         if self.render_exercises_with_level_selectbox and len(self.exercises) > 1:
             self.render_level_selectbox()
@@ -213,7 +213,10 @@ class ModuleView:
             # with st.expander("Open Exercises", expanded=not self.is_solved()):
             if self.render_exercises_with_level_selectbox:
                 with self.exercise_placeholder(self.selected_exercise_index()).exercise.container():
-                    was_solved = self.render_exercise_with_level_selectbox()
+                    if not is_presentation_mode():
+                        # Without exercise header we don't need the divider, too
+                        st.divider()
+                    was_solved = self.render_exercise(self.selected_exercise_index())
             else:
                 # render all exercises at once
                 for i, exercise in enumerate(self.exercises):
@@ -244,17 +247,10 @@ class ModuleView:
             if is_debug():
                 raise exp
 
-
-    def render_exercise_with_level_selectbox(self) -> bool | None:
-        #self.render_level_selectbox()
-        st.divider()
-        was_solved = self.render_exercise(self.selected_exercise_index())
-        return was_solved
-
     def render_exercise(self, exercise_index: int) -> bool | None:
         """Renders exercise and returns True if it was solved within this function call, or False if not"""
         session_solved = self.module_session().exercise_solved[exercise_index]
-        if not booleanize(os.environ.get("PRESENTATION_MODE", False)):
+        if not is_presentation_mode():
             with self.exercise_placeholder(self.selected_exercise_index()).header:
                 _display_module_header(exercise_index + 1, "", session_solved, number_prefix="Exercise ")
         # run exercise
@@ -265,7 +261,7 @@ class ModuleView:
             with self.exercise_placeholder(exercise_index).success_message:
                 st.success("🎉 Congratulations you solved the exercise!")
             # update exercise header if solved
-            if not booleanize(os.environ.get("PRESENTATION_MODE", False)):
+            if not is_presentation_mode():
                 with self.exercise_placeholder(self.selected_exercise_index()).header:
                     _display_module_header(exercise_index + 1, "", True, number_prefix="Exercise ")
         return solved

@@ -12,6 +12,12 @@ def booleanize(s: bool | str) -> bool:
 def is_debug() -> bool:
     return booleanize(os.environ.get("DEBUG", False))
 
+def is_presentation_mode() -> bool:
+    """Whether the app is started with presentation mode
+    During a presentation (e.g. conference) we might want to visualize ui components differently
+    """
+    return booleanize(os.environ.get("PRESENTATION_MODE", False))
+
 def hash_text(text) -> str:
     # Convert the text to bytes
     text_bytes = text.encode('utf-8')

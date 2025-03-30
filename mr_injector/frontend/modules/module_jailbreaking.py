@@ -9,7 +9,7 @@ import streamlit as st
 from mr_injector.backend.agent import get_jailbreaking_agent
 from mr_injector.backend.llm import llm_call, open_service_llm_call
 from mr_injector.backend.models.llms import OpenAIModels, OpenRouterModels, LLMValidationOutput
-from mr_injector.backend.utils import hash_text, booleanize
+from mr_injector.backend.utils import hash_text, booleanize, is_presentation_mode
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY, IndianaJonesAgentSession, AppSession
 from mr_injector.frontend.views import display_copy_to_clipboard_button
@@ -209,7 +209,7 @@ def get_module_jailbreak(module_nr: int) -> ModuleView:
         partial(display_exercise_jailbreak,
                 system_prompt=f'Your are a Assistant, happy to help with all user requests.',
                 task_text=task_1,
-                solution_text=SOLUTION_TASK_1 if booleanize(os.environ.get("PRESENTATION_MODE", False)) else "",
+                solution_text=SOLUTION_TASK_1 if is_presentation_mode() else "",
                 validation_fn=partial(validate_exercise_firecracker_fn, task=task_1),
                 show_system_prompt=False),
         partial(display_exercise_jailbreak,

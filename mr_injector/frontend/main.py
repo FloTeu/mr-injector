@@ -7,7 +7,7 @@ from functools import partial
 
 from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.llm import llm_call
-from mr_injector.backend.utils import booleanize
+from mr_injector.backend.utils import booleanize, is_presentation_mode
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_prompt_leaking import get_module_prompt_leaking
 from mr_injector.frontend.modules.module_prompt_injection import get_module_prompt_injection
@@ -89,7 +89,7 @@ def init_app_session() -> AppSession:
         modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(5)
     modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency(6)
 
-    if len(RagDocumentSet.to_list()) > 0 and not booleanize(os.environ.get("PRESENTATION_MODE", False)):
+    if len(RagDocumentSet.to_list()) > 0 and not is_presentation_mode():
         selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
         modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag(7)[selected_doc_set]
 
