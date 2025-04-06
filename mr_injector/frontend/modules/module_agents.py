@@ -210,7 +210,7 @@ def display_exercise_agent_ddos() -> bool | None:
 
 
 def display_exercise_agent_sql_injection() -> bool | None:
-    run_scan = st.toggle("Add Prompt Injection Scan")
+    run_scan = st.toggle("Add Read-Only Scan")
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"AGENT_INJECTION_DB_{'2' if run_scan else '1'}.png"
     db_path = Path(mr_injector.__file__).parent.parent / "files" / "chinook.db"
     if image_path.exists():

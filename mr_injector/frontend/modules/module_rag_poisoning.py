@@ -62,7 +62,7 @@ def add_resume_to_session():
     with st.form("Upload Resume"):
         uploaded_file = st.file_uploader('Choose your .pdf file', type="pdf")
 
-        category = "Data Scientist" if is_presentation_mode() else st.text_input("Job Title")
+        category = "Machine Learning Engineer" if is_presentation_mode() else st.text_input("Job Title")
         name = st.text_input("Applicant Name")
 
         # Every form must have a submit button.
