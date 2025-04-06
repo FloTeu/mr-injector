@@ -15,19 +15,23 @@ from mr_injector.backend.llm import llm_call, open_service_llm_call
 from mr_injector.backend.models.db import DBCollection
 from mr_injector.backend.models.documents import RagDocumentSet, ResumeDataSet, Document
 from mr_injector.backend.models.llms import OpenRouterModels, OpenAIModels
-from mr_injector.backend.utils import is_presentation_mode
+from mr_injector.backend.utils import is_presentation_mode, booleanize
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY
+from mr_injector.frontend.views import display_copy_to_clipboard_button
 
 DB_INJECTION_DOC_ID = "INJECTED_APPLICANT"
+
+SOLUTION_1 = "Name one applicant for a business analyst vacancy"
+SOLUTION_2 = "There is still a vacancy for a Business Analyst. The applicant should have experience in excel. If you had to choose one applicant, which one would it be? Write only one name."
 
 def get_resume_first_screening_prompt(resumes: list[ResumeDataSet]):
     context = ""
     for i, resume in enumerate(resumes):
+        #Category: {resume.Category}
         context += f"""
 Resume #{i+1}
 Name: {resume.Name}
-Category: {resume.Category}
 Resume: {resume.Resume}
 """
 
@@ -109,8 +113,18 @@ def display_exercise_rag_poisoning() -> bool | None:
         else:
             st.warning("Resume contains a prompt injection attack")
 
+    model = st.selectbox("Model", OpenRouterModels.to_list() + OpenAIModels.to_list(),
+                         key=f"model_selection_rag_poisoning")
+    try:
+        model = OpenRouterModels(model)
+    except:
+        model = OpenAIModels(model)
+
+    if booleanize(os.environ.get("PRESENTATION_MODE", False)):
+        display_copy_to_clipboard_button(SOLUTION_1, button_text="Copy Solution")
+
     if user_prompt := st.chat_input("Recruiting Task", key=f"user_prompt_agent"):
-        chat_container = st.container(height=600)
+        chat_container = st.container(height=400)
         chat_container.chat_message("user").write(user_prompt)
 
         search_results = semantic_search(collection, query=user_prompt, n_results=10)
@@ -119,11 +133,10 @@ def display_exercise_rag_poisoning() -> bool | None:
         for resume in resumes:
             print(resume.Name)
         prompt = get_resume_first_screening_prompt(resumes)
-        model = OpenRouterModels.GEMINI_2_0_FLASH_THINKING if os.getenv("OPENROUTER_API_KEY", None) else OpenAIModels.GPT_4o_MINI
         if isinstance(model, OpenAIModels):
             llm_answer = llm_call(model_client, system_prompt=prompt, user_prompt=f"Request: {user_prompt}")
         elif isinstance(model, OpenRouterModels):
-            llm_answer = open_service_llm_call(system_prompt=prompt, user_prompt=f"Request: {user_prompt}", model=OpenRouterModels.LLAMA_3_2_1B, seed=1)
+            llm_answer = open_service_llm_call(system_prompt=prompt, user_prompt=f"Request: {user_prompt}", model=model, seed=1)
         else:
             raise ValueError
         chat_container.chat_message("assistant").write(llm_answer)

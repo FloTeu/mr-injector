@@ -39,7 +39,7 @@ def hash_text(text) -> str:
     return hash_hex
 
 def get_random_name() -> str:
-    first_names=('John','Andy','Joe')
-    last_names=('Johnson','Smith','Williams')
+    first_names=('John','Andy','Joe', 'Alyse', 'Mikki', 'Jessie', 'Lucas')
+    last_names=('Johnson','Smith','Williams', 'Dottie', 'Ollie', 'Trix', 'Scout')
 
     return random.choice(first_names)+" "+random.choice(last_names)

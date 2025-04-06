@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from mr_injector.backend.models.base import BaseStrEnum
 
 class OpenRouterModels(BaseStrEnum):
+    LLAMA_4_MAVERICK = "meta-llama/llama-4-maverick"
     LLAMA_3_3_70B = "meta-llama/llama-3.3-70b-instruct"
     GROK = "x-ai/grok-2-1212"
     DEEPSEEK_LLAMA = "deepseek/deepseek-r1-distill-llama-70b"

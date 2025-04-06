@@ -76,7 +76,7 @@ def open_service_llm_call(user_prompt: str, model: OpenRouterModels, system_prom
                 {"role": "user", "content": user_prompt}
             ],
             "top_p": 1,
-            "temperature": 1,
+            "temperature": 0,
             "frequency_penalty": 0,
             "presence_penalty": 0,
             "repetition_penalty": 1,
