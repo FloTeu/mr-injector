@@ -33,7 +33,7 @@ def display_exercise_prompt_injection(system_prompt: str,
         st.code(system_prompt, language=None)
     display_task_text_field(task_text)
 
-    model = st.selectbox("Model", OpenRouterModels.to_list() + OpenAIModels.to_list(), key=f"model_selection_{hash_text(system_prompt)}")
+    model = st.selectbox("Model", OpenRouterModels.to_list(only_available=True) + OpenAIModels.to_list(), key=f"model_selection_{hash_text(system_prompt)}")
     try:
         model = OpenRouterModels(model)
     except:

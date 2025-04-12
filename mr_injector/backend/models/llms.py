@@ -18,7 +18,7 @@ class OpenRouterModels(BaseStrEnum):
     @classmethod
     def to_list(cls, only_available: bool = True):
         open_router_models = []
-        if not only_available or os.getenv("OPENROUTER_API_KEY", None) is not None:
+        if not only_available or os.getenv("OPENROUTER_API_KEY", None) not in ["", None]:
             open_router_models = list(map(lambda c: c.value, cls))
         return open_router_models
 

@@ -100,7 +100,7 @@ discovered, this information can be used to facilitate other attacks.""",
         session_key=f"module_{module_nr}",
         exercises=exercises,
         render_exercises_with_level_selectbox=True,
-        jump_to_next_level=True,
+        jump_to_next_level=False,
     )
 
 

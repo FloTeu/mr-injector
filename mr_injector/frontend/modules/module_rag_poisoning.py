@@ -113,7 +113,10 @@ def display_exercise_rag_poisoning() -> bool | None:
         else:
             st.warning("Resume contains a prompt injection attack")
 
-    model = st.selectbox("Model", OpenRouterModels.to_list() + OpenAIModels.to_list(),
+    # select gemini as default model in presentation mode
+    default_index = 7 if is_presentation_mode() and os.getenv("OPENROUTER_API_KEY", None) not in ["", None] else None
+    model = st.selectbox("Model", OpenRouterModels.to_list(only_available=True) + OpenAIModels.to_list(),
+                         index=default_index,
                          key=f"model_selection_rag_poisoning")
     try:
         model = OpenRouterModels(model)
