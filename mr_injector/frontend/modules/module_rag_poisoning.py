@@ -126,6 +126,7 @@ def display_exercise_rag_poisoning() -> bool | None:
     if booleanize(os.environ.get("PRESENTATION_MODE", False)):
         display_copy_to_clipboard_button(SOLUTION_1, button_text="Copy Solution")
 
+    llm_answer = None
     if user_prompt := st.chat_input("Recruiting Task", key=f"user_prompt_agent"):
         chat_container = st.container(height=400)
         chat_container.chat_message("user").write(user_prompt)
@@ -145,6 +146,10 @@ def display_exercise_rag_poisoning() -> bool | None:
         chat_container.chat_message("assistant").write(llm_answer)
 
     collection.delete(ids=[DB_INJECTION_DOC_ID])
+
+    if llm_answer and injected_applicant:
+        return injected_applicant.meta["Name"] in llm_answer
+
 
 
 
