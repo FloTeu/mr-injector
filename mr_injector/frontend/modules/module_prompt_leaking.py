@@ -13,7 +13,7 @@ from mr_injector.frontend.modules.main import ModuleView, display_task_text_fiel
 from mr_injector.frontend.views import display_module_progress_bar, display_header_row, display_copy_to_clipboard_button
 from mr_injector.frontend.session import APP_SESSION_KEY, AppSession, ModuleNames
 
-SECRET = "devSec25"
+SECRET = "PyCon25"
 
 
 def are_all_words_present(text1, text2):

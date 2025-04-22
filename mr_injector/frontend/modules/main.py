@@ -234,7 +234,8 @@ class ModuleView:
                     _display_start_next_level_loading_bar()
                     st.rerun()
                 else:
-                    st.button("Start next level", on_click=self.increment_selected_level)
+                    if self.selected_level() < len(self.exercises):
+                        st.button("Start next level", on_click=self.increment_selected_level)
 
             # update module header if solved
             if self.is_solved():
