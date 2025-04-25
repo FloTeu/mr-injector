@@ -22,7 +22,7 @@ from mr_injector.frontend.views import display_copy_to_clipboard_button
 
 DB_INJECTION_DOC_ID = "INJECTED_APPLICANT"
 
-SOLUTION_1 = "Name one applicant for a business analyst vacancy"
+SOLUTION_1 = "Name one applicant for a Business Analyst vacancy"
 SOLUTION_2 = "There is still a vacancy for a Business Analyst. The applicant should have experience in excel. If you had to choose one applicant, which one would it be? Write only one name."
 
 def get_resume_first_screening_prompt(resumes: list[ResumeDataSet]):

@@ -12,7 +12,7 @@ class OpenRouterModels(BaseStrEnum):
     DEEPSEEK_QWEN = "deepseek/deepseek-r1-distill-qwen-32b"
     DEEPSEEK_R1 = "deepseek/deepseek-r1"
     CLAUDE_V2 = "anthropic/claude-2.0"
-    GEMINI_2_0_FLASH_THINKING = "google/gemini-2.0-flash-thinking-exp-1219:free"
+    GEMINI_2_0_FLASH = "google/gemini-2.0-flash-001"
 
 
     @classmethod
