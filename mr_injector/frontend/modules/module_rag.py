@@ -224,7 +224,7 @@ def display_data_selection():
     def _change_module_in_session():
         doc_set = st.session_state[DATA_SELECTION_SESSION_KEY]
         app_session: AppSession = st.session_state[APP_SESSION_KEY]
-        app_session.modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag()[doc_set]
+        app_session.modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag(7)[doc_set]
 
     available_document_sets = RagDocumentSet.to_list()
     available_document_sets.remove(RagDocumentSet.RESUMES)
