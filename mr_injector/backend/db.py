@@ -86,4 +86,13 @@ def download_chinebook_db():
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(files_dir)
 
+def download_resume_csv():
+    url = "https://storage.googleapis.com/inovex-prompt-engineering-seminar/resumes.csv"
+    response = requests.get(url)
+    files_dir = get_root_dir() / f"files"
+    resume_file_path = files_dir / f"resumes.csv"
+
+    # Save the ZIP file to the specified path
+    with open(resume_file_path, 'wb') as f:
+        f.write(response.content)
 

@@ -15,7 +15,7 @@ from mr_injector.backend.utils import get_random_name
 
 
 def extract_resume_documents(file_path: Path, drop_duplicates: bool = True) -> List[Document]:
-    assert file_path.exists(), "file does not exist"
+    assert file_path.exists(), f"file {file_path} does not exist"
     assert "csv" == file_path.name.split(".")[-1], "must be a .csv file"
     resume_df = pd.read_csv(file_path)
     docs = []

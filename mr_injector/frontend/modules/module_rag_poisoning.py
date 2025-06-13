@@ -88,6 +88,9 @@ def add_resume_to_session():
 
 
 def display_exercise_rag_poisoning() -> bool | None:
+    if not RagDocumentSet.RESUMES.get_path().exists():
+        st.warning("Resume dataset does not exist in /files directory.")
+
     run_scan = st.toggle("Add Prompt Injection Scan")
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"RAG_POISONING{'_2' if run_scan else ''}.jpg"
     if image_path.exists():

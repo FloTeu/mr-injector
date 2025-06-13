@@ -2,7 +2,7 @@ import chromadb
 import streamlit as st
 
 from mr_injector.backend.db import init_chroma_db_client, OpenAIEmbeddingFunction, create_chromadb_collection, \
-    add_to_collection
+    add_to_collection, download_resume_csv
 from mr_injector.backend.models.db import DBCollection
 from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.rag import extract_resume_documents
@@ -28,8 +28,11 @@ def init_db_cols(db_client, model_client):
     science_paper_col = create_chromadb_collection(db_client, DBCollection.SCIENCE_PAPERS, embedding_function,
                                                    ensure_new=False)
     # fill up collection
-    if resume_col.count() == 0:
-        file_path = RagDocumentSet.RESUMES.get_path()
+    file_path = RagDocumentSet.RESUMES.get_path()
+    if not file_path.exists():
+        download_resume_csv()
+
+    if resume_col.count() == 0 and file_path.exists():
         docs = extract_resume_documents(file_path)
         add_to_collection(docs, resume_col)
     st.session_state[APP_SESSION_KEY].db_collections = {

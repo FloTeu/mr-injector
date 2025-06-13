@@ -221,8 +221,7 @@ def display_exercise_agent_sql_injection() -> bool | None:
         st.image(image_path, use_container_width=True)
 
     if not db_path.exists():
-        st.warning("Could not find a valid database")
-        return None
+        download_chinebook_db()
 
     connection = sqlite3.connect(db_path)
     # Create a cursor object to interact with the database
