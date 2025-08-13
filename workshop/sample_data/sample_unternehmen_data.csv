@@ -1,0 +1,101 @@
+OrderID,OrderDate,ProductName,CustomerID,City,Profit_EUR,Quantity
+SU-2025-001,2025-01-05,StadtFlitzer,User-84321,Berlin,3.50,1
+SU-2025-002,2025-01-06,StadtFlitzer,User-19874,Hamburg,5.20,1
+SU-2025-003,2025-01-08,UrbanConsult,Städtischer Kunde A,Potsdam,25000.00,1
+SU-2025-004,2025-01-10,StadtFlitzer,User-55432,München,7.80,1
+SU-2025-005,2025-01-12,ParkLeit,Unternehmenskunde A,Frankfurt,15000.00,100
+SU-2025-006,2025-01-15,StadtFlitzer,User-23987,Köln,2.90,1
+SU-2025-007,2025-01-18,StadtFlitzer,User-11223,Berlin,11.40,1
+SU-2025-008,2025-01-20,StadtFlitzer,User-98765,Hamburg,4.60,1
+SU-2025-009,2025-01-22,StadtFlitzer,User-65432,München,6.10,1
+SU-2025-010,2025-01-25,ParkLeit,Städtischer Kunde B,Düsseldorf,45000.00,250
+SU-2025-011,2025-02-01,StadtFlitzer,User-33445,Frankfurt,8.30,1
+SU-2025-012,2025-02-03,StadtFlitzer,User-77889,Berlin,3.80,1
+SU-2025-013,2025-02-05,StadtFlitzer,User-12345,Köln,9.50,1
+SU-2025-014,2025-02-08,UrbanConsult,Unternehmenskunde B,München,75000.00,1
+SU-2025-015,2025-02-10,StadtFlitzer,User-66778,Hamburg,5.00,1
+SU-2025-016,2025-02-12,StadtFlitzer,User-99887,München,4.20,1
+SU-2025-017,2025-02-15,StadtFlitzer,User-11234,Berlin,12.00,1
+SU-2025-018,2025-02-18,ParkLeit,Unternehmenskunde C,Hamburg,22000.00,150
+SU-2025-019,2025-02-20,StadtFlitzer,User-88776,Frankfurt,6.80,1
+SU-2025-020,2025-02-22,StadtFlitzer,User-44556,Köln,3.10,1
+SU-2025-021,2025-03-01,StadtFlitzer,User-22334,München,7.40,1
+SU-2025-022,2025-03-04,StadtFlitzer,User-55667,Berlin,5.60,1
+SU-2025-023,2025-03-06,ParkLeit,Unternehmenskunde D,Hamburg,18000.00,120
+SU-2025-024,2025-03-09,StadtFlitzer,User-88990,Hamburg,9.10,1
+SU-2025-025,2025-03-12,StadtFlitzer,User-11335,Frankfurt,4.90,1
+SU-2025-026,2025-03-15,UrbanConsult,Städtischer Kunde C,Nürnberg,35000.00,1
+SU-2025-027,2025-03-18,StadtFlitzer,User-77665,Köln,8.80,1
+SU-2025-028,2025-03-21,StadtFlitzer,User-22446,Berlin,3.70,1
+SU-2025-029,2025-03-24,StadtFlitzer,User-99001,München,10.20,1
+SU-2025-030,2025-03-27,StadtFlitzer,User-33557,Hamburg,6.30,1
+SU-2025-031,2025-04-02,StadtFlitzer,User-66889,Frankfurt,5.50,1
+SU-2025-032,2025-04-05,ParkLeit,Städtischer Kunde D,Stuttgart,55000.00,300
+SU-2025-033,2025-04-07,StadtFlitzer,User-11447,Berlin,7.10,1
+SU-2025-034,2025-04-10,StadtFlitzer,User-88991,Köln,4.30,1
+SU-2025-035,2025-04-12,StadtFlitzer,User-22558,München,9.80,1
+SU-2025-036,2025-04-15,StadtFlitzer,User-10001,Wien,3.90,1
+SU-2025-037,2025-04-16,StadtFlitzer,User-10002,Wien,5.80,1
+SU-2025-038,2025-04-18,UrbanConsult,Städtischer Kunde E,Wien,60000.00,1
+SU-2025-039,2025-04-20,StadtFlitzer,User-55889,Hamburg,6.70,1
+SU-2025-040,2025-04-22,StadtFlitzer,User-10003,Wien,7.20,1
+SU-2025-041,2025-04-25,StadtFlitzer,User-33779,Frankfurt,8.90,1
+SU-2025-042,2025-04-28,StadtFlitzer,User-77880,Berlin,4.10,1
+SU-2025-043,2025-05-01,StadtFlitzer,User-10010,Wien,4.50,1
+SU-2025-044,2025-05-03,ParkLeit,Unternehmenskunde E,Frankfurt,32000.00,200
+SU-2025-045,2025-05-05,StadtFlitzer,User-22881,München,11.10,1
+SU-2025-046,2025-05-08,StadtFlitzer,User-99112,Köln,6.40,1
+SU-2025-047,2025-05-10,StadtFlitzer,User-10015,Wien,8.10,1
+SU-2025-048,2025-05-12,StadtFlitzer,User-44882,Hamburg,5.30,1
+SU-2025-049,2025-05-15,StadtFlitzer,User-66993,Berlin,9.20,1
+SU-2025-050,2025-05-18,UrbanConsult,Unternehmenskunde F,Berlin,95000.00,1
+SU-2025-051,2025-05-20,StadtFlitzer,User-10021,Wien,3.60,1
+SU-2025-052,2025-05-22,StadtFlitzer,User-88004,Frankfurt,7.60,1
+SU-2025-053,2025-05-25,StadtFlitzer,User-33995,München,4.70,1
+SU-2025-054,2025-05-28,StadtFlitzer,User-11556,Köln,10.50,1
+SU-2025-055,2025-06-01,StadtFlitzer,User-10030,Wien,6.90,1
+SU-2025-066,2025-06-03,StadtFlitzer,User-77117,Berlin,5.10,1
+SU-2025-057,2025-06-05,ParkLeit,Unternehmenskunde G,Köln,48000.00,280
+SU-2025-058,2025-06-08,StadtFlitzer,User-99228,Hamburg,8.40,1
+SU-2025-059,2025-06-10,StadtFlitzer,User-10035,Wien,4.00,1
+SU-2025-060,2025-06-12,StadtFlitzer,User-22999,München,9.90,1
+SU-2025-061,2025-06-15,StadtFlitzer,User-55001,Frankfurt,7.00,1
+SU-2_025-062,2025-06-18,StadtFlitzer,User-11667,Köln,3.30,1
+SU-2025-063,2025-06-20,UrbanConsult,Unternehmenskunde H,Hamburg,42000.00,1
+SU-2025-064,2025-06-22,StadtFlitzer,User-10042,Wien,11.50,1
+SU-2025-065,2025-06-25,StadtFlitzer,User-88223,Berlin,6.20,1
+SU-2025-066,2025-06-28,StadtFlitzer,User-34004,München,8.70,1
+SU-2025-067,2025-07-01,StadtFlitzer,User-10050,Wien,5.40,1
+SU-2025-068,2025-07-03,StadtFlitzer,User-99334,Hamburg,9.30,1
+SU-2025-069,2025-07-05,ParkLeit,Unternehmenskunde I,Berlin,12000.00,80
+SU-2025-070,2025-07-08,StadtFlitzer,User-67115,Frankfurt,4.40,1
+SU-2025-071,2025-07-10,StadtFlitzer,User-11778,Köln,10.80,1
+SU-2025-072,2025-07-12,StadtFlitzer,User-10058,Wien,7.30,1
+SU-2025-073,2025-07-15,StadtFlitzer,User-88334,Berlin,6.60,1
+SU-2025-074,2025-07-18,StadtFlitzer,User-34115,München,8.00,1
+SU-2025-075,2025-07-20,UrbanConsult,Unternehmenskunde J,München,80000.00,1
+SU-2025-076,2025-07-22,StadtFlitzer,User-10065,Wien,5.90,1
+SU-2025-077,2025-07-25,StadtFlitzer,User-99445,Hamburg,9.60,1
+SU-2025-078,2025-07-28,StadtFlitzer,User-67226,Frankfurt,4.80,1
+SU-2025-079,2025-08-01,StadtFlitzer,User-11889,Köln,11.80,1
+SU-2025-080,2025-08-03,StadtFlitzer,User-10071,Wien,7.90,1
+SU-2025-081,2025-08-05,StadtFlitzer,User-88445,Berlin,6.00,1
+SU-2025-082,2025-08-06,StadtFlitzer,User-34226,München,8.20,1
+SU-2025-083,2025-08-07,StadtFlitzer,User-10077,Wien,5.70,1
+SU-2025-084,2025-08-08,StadtFlitzer,User-99556,Hamburg,9.40,1
+SU-2025-085,2025-08-09,StadtFlitzer,User-67337,Frankfurt,4.20,1
+SU-2025-086,2025-08-10,StadtFlitzer,User-11990,Köln,10.10,1
+SU-2025-087,2025-08-11,StadtFlitzer,User-10083,Wien,7.50,1
+SU-2025-088,2025-08-12,StadtFlitzer,User-88556,Berlin,6.50,1
+SU-2025-089,2025-08-13,ParkLeit,Unternehmenskunde K,Leverkusen,28000.00,180
+SU-2025-090,2025-08-14,StadtFlitzer,User-34337,München,8.60,1
+SU-2025-091,2025-08-15,StadtFlitzer,User-10090,Wien,6.10,1
+SU-2025-092,2025-08-16,StadtFlitzer,User-99667,Hamburg,9.00,1
+SU-2025-093,2025-08-17,StadtFlitzer,User-67448,Frankfurt,3.90,1
+SU-2025-094,2025-08-18,StadtFlitzer,User-12001,Köln,11.30,1
+SU-2025-095,2025-08-19,StadtFlitzer,User-10095,Wien,7.70,1
+SU-2025-096,2025-08-20,StadtFlitzer,User-88667,Berlin,6.90,1
+SU-2025-097,2025-08-21,UrbanConsult,Städtischer Kunde F,Leipzig,50000.00,1
+SU-2025-098,2025-08-22,StadtFlitzer,User-34448,München,8.50,1
+SU-2025-099,2025-08-23,StadtFlitzer,User-10100,Wien,5.20,1
+SU-2025-100,2025-08-24,StadtFlitzer,User-99778,Hamburg,9.70,1
