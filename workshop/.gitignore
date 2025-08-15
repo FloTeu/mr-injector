@@ -1,9 +1,0 @@
-# Deepeval
-.deepeval*
-# VSCode
-.vscode
-# Chroma DB
-chroma_db
-# Other
-.env
-.venv

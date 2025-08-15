@@ -73,5 +73,8 @@ Hint: If you are using podman ensure that the right linux platform for spacy is 
    docker run -p 8501:8501 mr-injector
    ```
 
-
+## Workshop Setup
+- Select python interpreter of the `mr_injector` venv
+- Select `mr_injector` venv kernel for the notebook
+- Run the notebook (when prompted, install the `ipykernel` package)
    

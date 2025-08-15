@@ -15,3 +15,5 @@ science_papers.json
 
 #VSCode
 .vscode
+# Deepeval
+.deepeval*
