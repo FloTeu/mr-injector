@@ -110,18 +110,38 @@ if APP_SESSION_KEY not in st.session_state:
 else:
     app_session = st.session_state[APP_SESSION_KEY]
 
-module_pages: list[st.Page] = []
+# Group modules by category
+llm_security_pages: list[st.Page] = []
+agent_security_pages: list[st.Page] = []
+rag_pages: list[st.Page] = []
+
 for module_name, module in app_session.modules.items():
-    module_pages.append(st.Page(partial(display_module, module), title=module.title,
-                           icon="✅" if module.is_solved() else None,
-                           url_path=module_name.lower())
-                        )
+    page = st.Page(partial(display_module, module), title=module.title,
+                   icon="✅" if module.is_solved() else None,
+                   url_path=module_name.lower())
 
-pages: list[st.Page] = [
-    st.Page(partial(display_general, first_module=module_pages[0]), title="Intro", icon="🧐", default=True),
-    *module_pages
-]
+    # Categorize modules
+    if module_name in [ModuleNames.PROMPT_LEAKAGE, ModuleNames.JAILBREAK, ModuleNames.PROMPT_INJECTION, ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING]:
+        llm_security_pages.append(page)
+    elif module_name in [ModuleNames.UNBOUNDED_CONSUMPTION, ModuleNames.EXCESSIVE_AGENCY]:
+        agent_security_pages.append(page)
+    elif module_name in [ModuleNames.RETRIEVAL_AUGMENTED_GENERATION]:
+        rag_pages.append(page)
 
-pg = st.navigation(pages, position="sidebar", expanded=True)
+# Create navigation with sections
+pages = {
+    "Introduction": [
+        st.Page(partial(display_general, first_module=llm_security_pages[0] if llm_security_pages else None),
+                title="Intro", icon="🧐", default=True)
+    ]
+}
+
+if llm_security_pages:
+    pages["LLM Security"] = llm_security_pages
+if agent_security_pages:
+    pages["Agent Security"] = agent_security_pages
+if rag_pages:
+    pages["RAG"] = rag_pages
+
+pg = st.navigation(pages, position="top", expanded=True)
 pg.run()
-
