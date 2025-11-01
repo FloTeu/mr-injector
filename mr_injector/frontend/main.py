@@ -5,6 +5,8 @@ import streamlit as st
 
 from functools import partial
 
+from streamlit.navigation.page import StreamlitPage
+
 from mr_injector.backend.models.documents import RagDocumentSet
 from mr_injector.backend.llm import llm_call
 from mr_injector.backend.utils import booleanize, is_presentation_mode
@@ -22,7 +24,7 @@ from mr_injector.frontend.views import display_header_row, display_module_progre
 # fixes: https://github.com/VikParuchuri/marker/issues/442
 torch.classes.__path__ = []
 
-def display_general(first_module: st.Page):
+def display_general(first_module: StreamlitPage):
     client = display_open_ai_api_key_input()
     display_header_row()
     st.subheader("Introduction")
@@ -70,7 +72,7 @@ def display_open_ai_api_key_input() :
     else:
         return client
 
-def display_module(module: ModuleView):
+def display_module(module: ModuleView, next_module: StreamlitPage):
     client = display_open_ai_api_key_input()
     if client is not None:
         display_header_row()
@@ -78,6 +80,13 @@ def display_module(module: ModuleView):
         module.init_placeholders()
         module.display()
 
+        # Add Next Module button at the bottom
+        if next_module is not None and module.is_solved():
+            st.divider()
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.button("➡️ Next Module", use_container_width=True, type="secondary"):
+                    st.switch_page(next_module)
 
 def init_app_session() -> AppSession:
     modules: dict[ModuleNames, ModuleView] = {}
@@ -110,18 +119,62 @@ if APP_SESSION_KEY not in st.session_state:
 else:
     app_session = st.session_state[APP_SESSION_KEY]
 
-module_pages: list[st.Page] = []
-for module_name, module in app_session.modules.items():
-    module_pages.append(st.Page(partial(display_module, module), title=module.title,
-                           icon="✅" if module.is_solved() else None,
-                           url_path=module_name.lower())
-                        )
+# Group modules by category and create page mapping
+llm_security_pages: list[st.Page] = []
+agent_security_pages: list[st.Page] = []
+rag_pages: list[st.Page] = []
 
-pages: list[st.Page] = [
-    st.Page(partial(display_general, first_module=module_pages[0]), title="Intro", icon="🧐", default=True),
-    *module_pages
-]
+# Create a list of module items to properly map next modules
+module_items_list = list(app_session.modules.items())
+module_to_next_page: dict[ModuleNames, ModuleNames | None] = {}
 
-pg = st.navigation(pages, position="sidebar", expanded=True)
+# First create a mapping of module_name to next_module_name
+for idx, (module_name, _) in enumerate(module_items_list):
+    if idx < len(module_items_list) - 1:
+        next_module_name = module_items_list[idx + 1][0]
+        module_to_next_page[module_name] = next_module_name
+    else:
+        module_to_next_page[module_name] = None
+
+# Temporary storage for pages
+temp_pages: dict[ModuleNames, st.Page] = {}
+
+# Now recreate pages with proper next_module references using reverse iteration
+for module_name, module in reversed(list(app_session.modules.items())):
+    next_module_name = module_to_next_page[module_name]
+    next_page = temp_pages.get(next_module_name) if next_module_name else None
+
+    page = st.Page(
+        partial(display_module, module, next_module=next_page),
+        title=module.title,
+        icon="✅" if module.is_solved() else None,
+        url_path=module_name.lower()
+    )
+
+    temp_pages[module_name] = page
+
+    # Categorize modules
+    if module_name in [ModuleNames.PROMPT_LEAKAGE, ModuleNames.JAILBREAK, ModuleNames.PROMPT_INJECTION, ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING]:
+        llm_security_pages.insert(0, page)  # Insert at beginning since we're iterating in reverse
+    elif module_name in [ModuleNames.UNBOUNDED_CONSUMPTION, ModuleNames.EXCESSIVE_AGENCY]:
+        agent_security_pages.insert(0, page)
+    elif module_name in [ModuleNames.RETRIEVAL_AUGMENTED_GENERATION]:
+        rag_pages.insert(0, page)
+
+# Create navigation with sections
+pages = {
+    "Introduction": [
+        st.Page(partial(display_general, first_module=llm_security_pages[0] if llm_security_pages else None),
+                title="Intro", icon="🧐", default=True)
+    ]
+}
+
+if llm_security_pages:
+    pages["LLM Security"] = llm_security_pages
+if agent_security_pages:
+    pages["Agent Security"] = agent_security_pages
+if rag_pages:
+    pages["RAG"] = rag_pages
+
+pg = st.navigation(pages, position="top", expanded=True)
 pg.run()
-

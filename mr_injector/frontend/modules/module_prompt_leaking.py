@@ -14,6 +14,7 @@ from mr_injector.frontend.views import display_module_progress_bar, display_head
 from mr_injector.frontend.session import APP_SESSION_KEY, AppSession, ModuleNames
 
 SECRET = "PyCon25"
+PROMPT_LEAKAGE_USER_PROMPT_KEY = "prompt_leakage_user_prompt"
 
 
 def are_all_words_present(text1, text2):
@@ -36,7 +37,7 @@ def display_exercise_prompt_leaking_secret(system_prompt: str,
         st.warning("Secret is not available in system_prompt")
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"PROMPT_LEAKAGE_{'2' if add_control_llm else '1'}.jpg"
     if image_path.exists():
-        st.image(image_path, use_container_width=False)
+        st.image(image_path)
     if show_system_prompt:
         st.write("**System prompt:**")
         st.code(system_prompt.replace(secret, "█████"), language=None)
@@ -44,7 +45,16 @@ def display_exercise_prompt_leaking_secret(system_prompt: str,
 
     if solution_text:
         display_copy_to_clipboard_button(solution_text, button_text="Copy Solution")
-    user_prompt = st.text_area("**User prompt:**", key=f"user_prompt_{hash_text(system_prompt)}")
+
+    # Get the stored prompt from session state, or use empty string as default
+    default_prompt = st.session_state.get(PROMPT_LEAKAGE_USER_PROMPT_KEY, "")
+
+    user_prompt = st.text_area("**User prompt:**", value=default_prompt, key=f"user_prompt_{hash_text(system_prompt)}")
+
+    # Store the current prompt in session state whenever it changes
+    if user_prompt:
+        st.session_state[PROMPT_LEAKAGE_USER_PROMPT_KEY] = user_prompt
+
     llm_answer = None
     if st.button("Generate" if add_control_llm else "Submit", key=f"prompt_submit_{hash_text(system_prompt)}"):
         with st.spinner():
@@ -102,5 +112,3 @@ discovered, this information can be used to facilitate other attacks.""",
         render_exercises_with_level_selectbox=True,
         jump_to_next_level=False,
     )
-
-

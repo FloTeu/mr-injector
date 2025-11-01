@@ -50,10 +50,15 @@ def query_db(query: str, db_connection: Connection, run_injection_scan: bool = F
         # Execute the query
         cursor.execute(query)
 
+        # Commit the changes to persist them to the database
+        db_connection.commit()
+
         # Fetch all results
         rows = cursor.fetchall()
     except Error as e:
         print(f"An error occurred: {e}")
+        # Rollback in case of error
+        db_connection.rollback()
     finally:
         # Close the cursor and connection
         cursor.close()
