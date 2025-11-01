@@ -7,8 +7,6 @@ from pathlib import Path
 from typing import List
 
 import pandas as pd
-from haystack import Document as HDocument
-from haystack import Pipeline
 
 from mr_injector.backend.models.documents import VDIDoc, SciencePaper, RagDocumentSet, Document, ResumeDataSet
 from mr_injector.backend.utils import get_random_name
@@ -35,15 +33,15 @@ def extract_resume_documents(file_path: Path, drop_duplicates: bool = True) -> L
     return docs
 
 
-def create_haystack_vdi_documents(directory_path: Path | str) -> List[HDocument]:
+def create_vdi_documents(directory_path: Path | str) -> List[Document]:
     """
-    Iterates over all JSON files in the specified directory and creates a list of Haystack 2.0 Documents.
+    Iterates over all JSON files in the specified directory and creates a list of Documents.
 
     Args:
     directory_path (str): The path to the directory containing JSON files.
 
     Returns:
-    List[Document]: A list of Haystack Document objects.
+    List[Document]: A list of Document objects.
     """
     documents = []
     # Iterate over each file in the directory
@@ -54,27 +52,32 @@ def create_haystack_vdi_documents(directory_path: Path | str) -> List[HDocument]
                 # Open and load the JSON file
                 with open(file_path, 'r', encoding='utf-8') as file:
                     vdi_doc = VDIDoc(**json.load(file))
-                    doc = HDocument(content=vdi_doc.abstract, meta=vdi_doc.dict())
+                    doc = Document(
+                        content=vdi_doc.abstract,
+                        meta={k: ", ".join(v) if isinstance(v, list) else v for k, v in vdi_doc.model_dump(mode='json').items()},
+                        id=str(i)
+                    )
                     documents.append(doc)
             except Exception as e:
                 print(f"Could not load json file {i} {filename}", str(e))
     return documents
 
 
-def create_haystack_bibtex_citations(file_path: Path | str) -> List[HDocument]:
+def create_bibtex_citation_documents(file_path: Path | str) -> List[Document]:
     """
-    Iterates over all entries in a bibtex file and creates a list of Haystack 2.0 Documents.
+    Iterates over all entries in a bibtex file and creates a list of Documents.
 
     Args:
-    references_path (str): The path to the reference file in bibtex format.
+    file_path (str): The path to the reference file in bibtex format.
 
     Returns:
-    List[Document]: A list of Haystack Document objects.
+    List[Document]: A list of Document objects.
     """
     documents = []
     year_pattern = re.compile(r"[0-9][0-9][0-9][0-9]")
     with open(file_path, 'r', encoding='utf-8') as file:
       json_content = json.load(file)
+      doc_id = 0
       for entry in json_content['items']:
         if entry['itemType'] != 'attachment':
           date = entry.get('date', '1970')
@@ -89,43 +92,57 @@ def create_haystack_bibtex_citations(file_path: Path | str) -> List[HDocument]:
               entry_type=entry['itemType'],
               doi=entry.get('DOI'))
           content = f"Title: {citation.title} Abstract: {citation.abstract} Tags: {citation.tags}"
-          doc = HDocument(content=content, meta=citation.dict())
+          creators_string = ", ".join([" ".join(c) for c in citation.creators])
+          meta={k: ", ".join(v) if isinstance(v, list) else v for k, v in citation.model_dump(mode='json').items() if k != "creators"}
+          if len(citation.creators) > 0:
+              meta["creators"] = creators_string
+          doc = Document(
+              content=content,
+              meta=meta,
+              id=str(doc_id)
+          )
           documents.append(doc)
+          doc_id += 1
 
           if len(citation.creators) > 0:
-              creators_string = ", ".join([" ".join(c) for c in citation.creators])
               content = f"Creators: {creators_string}"
-              doc = HDocument(content=content, meta=citation.dict())
+              doc = Document(
+                  content=content,
+                  meta=meta,
+                  id=str(doc_id)
+              )
               documents.append(doc)
+              doc_id += 1
 
     return documents
 
 
-def get_rag_pipeline(text_embedder, retriever, prompt_builder, generator) -> Pipeline:
-  rag_pipeline = Pipeline()
-  # Add components to your pipeline
-  rag_pipeline.add_component("text_embedder", text_embedder)
-  rag_pipeline.add_component("retriever", retriever)
-  rag_pipeline.add_component("prompt_builder", prompt_builder)
-  rag_pipeline.add_component("llm", generator)
+def chromadb_results_to_documents(results: dict) -> List[Document]:
+    """
+    Convert ChromaDB query results to Document objects.
 
-  # Now, connect the components to each other
-  rag_pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
-  rag_pipeline.connect("retriever", "prompt_builder.documents")
-  rag_pipeline.connect("prompt_builder", "llm")
+    Args:
+        results: ChromaDB query results with 'documents', 'metadatas', 'ids'
 
-  return rag_pipeline
+    Returns:
+        List[Document]: List of Document objects
+    """
+    documents = []
+    if results['documents'] and len(results['documents']) > 0:
+        # ChromaDB returns nested lists, flatten them
+        docs = results['documents'][0]
+        metas = results['metadatas'][0]
+        ids = results['ids'][0]
 
-def get_retrieval_pipeline(text_embedder, retriever) -> Pipeline:
-  rag_pipeline = Pipeline()
-  # Add components to your pipeline
-  rag_pipeline.add_component("text_embedder", text_embedder)
-  rag_pipeline.add_component("retriever", retriever)
+        for content, meta, doc_id in zip(docs, metas, ids):
+            documents.append(Document(
+                content=content,
+                meta=meta,
+                id=doc_id
+            ))
 
-  # Now, connect the components to each other
-  rag_pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
+    return documents
 
-  return rag_pipeline
 
 def get_default_document_set_context_prompt(document_set: RagDocumentSet,
                                             include_all_relevant_meta: bool = False) -> str:
@@ -144,20 +161,12 @@ def get_default_document_set_context_prompt(document_set: RagDocumentSet,
         extended_meta = 'Creators: {{ document.meta["creators"] }}' if include_all_relevant_meta else ""
         return """Documents:
 {% for document in documents %}""" + """
-    Abstract: {{ document.meta["abstractNote"] }}
+    Abstract: {{ document.meta["abstract"] }}
     Title: {{ document.meta["title"] }}
     Tags: {{ document.meta["tags"] }}
     Publication year: {{ document.meta["date"] }}
     Type: {{ document.meta["entry_type"] }}
-    DOI: {{ document.meta["doi"] }}
     """ + extended_meta + """
 {% endfor %}"""
-    elif document_set == RagDocumentSet.RESUMES:
-        return """Documents:
-        {% for document in documents %}""" + """
-            Category: {{ document.meta["Category"] }}
-            Resume: {{ document.meta["Resume"] }}
-        {% endfor %}"""
     else:
-        logging.warning(f"No system prompt defined for document_set {document_set}")
-        return ""
+        raise ValueError(f"Unknown document set: {document_set}")

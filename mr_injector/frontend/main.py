@@ -98,7 +98,7 @@ def init_app_session() -> AppSession:
         modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(5)
     modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency(6)
 
-    if len(RagDocumentSet.to_list()) > 0 and not is_presentation_mode():
+    if len(RagDocumentSet.to_list()) > 0:# and not is_presentation_mode():
         selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
         modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag(7)[selected_doc_set]
 
