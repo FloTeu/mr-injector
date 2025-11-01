@@ -94,7 +94,7 @@ def display_exercise_rag_poisoning() -> bool | None:
     run_scan = st.toggle("Add Prompt Injection Scan")
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"RAG_POISONING{'_2' if run_scan else ''}.jpg"
     if image_path.exists():
-        st.image(image_path, use_container_width=True)
+        st.image(image_path, use_container_width=False)
 
     model_client = st.session_state[APP_SESSION_KEY].client
     collection = st.session_state[APP_SESSION_KEY].db_collections[DBCollection.RESUMES]

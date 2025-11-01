@@ -189,7 +189,7 @@ def call_agent(user_prompt: str,
 def display_exercise_agent_ddos() -> bool | None:
     image_path = Path(mr_injector.__file__).parent.parent / "files" / "AGENT_INJECTION.png"
     if image_path.exists():
-        st.image(image_path, use_container_width=True)
+        st.image(image_path, use_container_width=False)
 
     client = st.session_state[APP_SESSION_KEY].client
     required_tool_calls = 5
@@ -218,7 +218,7 @@ def display_exercise_agent_sql_injection() -> bool | None:
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"AGENT_INJECTION_DB_{'2' if run_scan else '1'}.png"
     db_path = Path(mr_injector.__file__).parent.parent / "files" / "chinook.db"
     if image_path.exists():
-        st.image(image_path, use_container_width=True)
+        st.image(image_path, use_container_width=False)
 
     if not db_path.exists():
         download_chinebook_db()
