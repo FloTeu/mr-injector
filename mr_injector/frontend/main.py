@@ -81,7 +81,7 @@ def display_module(module: ModuleView, next_module: StreamlitPage):
         module.display()
 
         # Add Next Module button at the bottom
-        if next_module is not None:
+        if next_module is not None and module.is_solved():
             st.divider()
             col1, col2, col3 = st.columns([1, 1, 1])
             with col2:
