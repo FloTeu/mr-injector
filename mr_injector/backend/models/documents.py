@@ -29,6 +29,13 @@ class Document(BaseModel):
             self.id = hash_text(self.content)
         return self
 
+    @model_validator(mode='after')
+    def ensure_meta_not_none(self) -> Self:
+        for k,v in self.meta.items():
+            if v is None:
+                self.meta[k] = "N/A"
+        return self
+
 
 class VDIDoc(BaseModel):
   """Defines a single 'VDI Richtlinie'"""
