@@ -37,7 +37,7 @@ def display_exercise_prompt_leaking_secret(system_prompt: str,
         st.warning("Secret is not available in system_prompt")
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"PROMPT_LEAKAGE_{'2' if add_control_llm else '1'}.jpg"
     if image_path.exists():
-        st.image(image_path, use_container_width=False)
+        st.image(image_path)
     if show_system_prompt:
         st.write("**System prompt:**")
         st.code(system_prompt.replace(secret, "█████"), language=None)

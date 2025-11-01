@@ -98,7 +98,7 @@ def display_indiana_jones_method(
     client = app_session.client
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"slidedeck_indiana_jones.jpg"
     if image_path.exists():
-        st.image(image_path, use_container_width=True)
+        st.image(image_path)
     if st.button("Reset Indiana Jones Agent", icon="🔄"):
         create_agent(app_session, client)
 
