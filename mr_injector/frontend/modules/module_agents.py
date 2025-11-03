@@ -117,10 +117,10 @@ def call_agent(user_prompt: str,
                container: DeltaGenerator,
                client: OpenAI | AzureOpenAI,
                db_connection: Connection | None=None,
+               tavily_api_key: str | None=None,
                run_injection_scan: bool = False,
                stop_after_n_tool_calls: int | None = None):
     api_tool_calls = 0
-    api_key = get_tavily_api_key()
 
     # Initialize messages with system prompt
     messages = [
@@ -169,7 +169,7 @@ def call_agent(user_prompt: str,
                 if stop_after_n_tool_calls and api_tool_calls >= stop_after_n_tool_calls:
                     return True
 
-                response_data = search_web_via_tavily(**function_args, api_key=api_key)
+                response_data = search_web_via_tavily(**function_args, api_key=tavily_api_key)
 
                 response_text = ""
                 for i, web_result in enumerate(response_data.get("results", [])):
@@ -218,7 +218,8 @@ def display_exercise_agent_ddos() -> bool | None:
     client = st.session_state[APP_SESSION_KEY].client
     required_tool_calls = 5
     warning_placeholder = st.empty()
-    if not get_tavily_api_key():
+    api_key = get_tavily_api_key()
+    if not api_key:
         warning_placeholder.warning("Please provide a valid tavily api key in order to solve this exercise")
         return False
     agent_config = get_web_agent_config(instructions="You are a helpful assistant capable to search the web via an API from the service tavily.")
@@ -231,7 +232,7 @@ def display_exercise_agent_ddos() -> bool | None:
     if st.button("Submit", key=f"prompt_submit_agent"):
         container = st.container(height=600)
         container.chat_message("user").write(user_prompt)
-        solved = call_agent(user_prompt, agent_config, container, client, stop_after_n_tool_calls=required_tool_calls)
+        solved = call_agent(user_prompt, agent_config, container, client, tavily_api_key=api_key,  stop_after_n_tool_calls=required_tool_calls)
         if not solved:
             st.error("The agent stopped calling the API. Please try another prompt.")
         return solved
