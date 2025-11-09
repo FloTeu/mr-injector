@@ -45,6 +45,7 @@ To set up the project locally, follow these steps:
    If you run the app locally, set `DEBUG` to True.  
    Set `PRESENTATION_MODE` to True, if the ui should be more suitable for a lecture.  
    If like to have more models, you can also include `OPENROUTER_API_KEY`.
+   Provide a `TAVILY_API_KEY` to activate the unbounded consumption module.
 2. **Activate virtual environment**
    ```bash
    # execute this in root of the project

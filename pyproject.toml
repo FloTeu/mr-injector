@@ -3,11 +3,10 @@ name = "mr-injector"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"  # Updated to match your Docker image
+requires-python = ">=3.10,<3.13"  # Updated to match your Docker image
 packages = [{include = "mr_injector"}]
 dependencies = [
     "chromadb>=0.6.3",
-    "haystack-ai>=2.9.0",
     "llm-guard>=0.3.15",
     "mcp>=1.6.0",
     "openai>=1.58.1",
@@ -15,7 +14,7 @@ dependencies = [
     "pyperclip>=1.9.0",
     "python-dotenv>=1.0.1",
     "sentence-transformers>=3.4.1",
-    "streamlit>=1.41.1",
+    "streamlit>=1.50.0",
     #"torch>=1.11.0",  # Keep this line to specify the torch version
 ]
 

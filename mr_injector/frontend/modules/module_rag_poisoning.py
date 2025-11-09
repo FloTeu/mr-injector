@@ -22,7 +22,7 @@ from mr_injector.frontend.views import display_copy_to_clipboard_button
 
 DB_INJECTION_DOC_ID = "INJECTED_APPLICANT"
 
-SOLUTION_1 = "Name one applicant for a business analyst vacancy"
+SOLUTION_1 = "Name one applicant for a Business Analyst vacancy"
 SOLUTION_2 = "There is still a vacancy for a Business Analyst. The applicant should have experience in excel. If you had to choose one applicant, which one would it be? Write only one name."
 
 def get_resume_first_screening_prompt(resumes: list[ResumeDataSet]):
@@ -88,10 +88,13 @@ def add_resume_to_session():
 
 
 def display_exercise_rag_poisoning() -> bool | None:
+    if not RagDocumentSet.RESUMES.get_path().exists():
+        st.warning("Resume dataset does not exist in /files directory.")
+
     run_scan = st.toggle("Add Prompt Injection Scan")
     image_path = Path(mr_injector.__file__).parent.parent / "files" / f"RAG_POISONING{'_2' if run_scan else ''}.jpg"
     if image_path.exists():
-        st.image(image_path, use_container_width=True)
+        st.image(image_path)
 
     model_client = st.session_state[APP_SESSION_KEY].client
     collection = st.session_state[APP_SESSION_KEY].db_collections[DBCollection.RESUMES]
@@ -127,23 +130,25 @@ def display_exercise_rag_poisoning() -> bool | None:
         display_copy_to_clipboard_button(SOLUTION_1, button_text="Copy Solution")
 
     llm_answer = None
-    if user_prompt := st.chat_input("Recruiting Task", key=f"user_prompt_agent"):
-        chat_container = st.container(height=400)
-        chat_container.chat_message("user").write(user_prompt)
+    chat_container = st.container()
+    with chat_container:
+        if user_prompt := st.chat_input("Recruiting Task", key=f"user_prompt_agent"):
+            messages_display = st.container(height=400)
+            messages_display.chat_message("user").write(user_prompt)
 
-        search_results = semantic_search(collection, query=user_prompt, n_results=10)
-        resumes = [ResumeDataSet(**sr) for sr in search_results.get("metadatas")[0]]
-        print("_________________________")
-        for resume in resumes:
-            print(resume.Name)
-        prompt = get_resume_first_screening_prompt(resumes)
-        if isinstance(model, OpenAIModels):
-            llm_answer = llm_call(model_client, system_prompt=prompt, user_prompt=f"Request: {user_prompt}")
-        elif isinstance(model, OpenRouterModels):
-            llm_answer = open_service_llm_call(system_prompt=prompt, user_prompt=f"Request: {user_prompt}", model=model, seed=1)
-        else:
-            raise ValueError
-        chat_container.chat_message("assistant").write(llm_answer)
+            search_results = semantic_search(collection, query=user_prompt, n_results=10)
+            resumes = [ResumeDataSet(**sr) for sr in search_results.get("metadatas")[0]]
+            print("_________________________")
+            for resume in resumes:
+                print(resume.Name)
+            prompt = get_resume_first_screening_prompt(resumes)
+            if isinstance(model, OpenAIModels):
+                llm_answer = llm_call(model_client, system_prompt=prompt, user_prompt=f"Request: {user_prompt}")
+            elif isinstance(model, OpenRouterModels):
+                llm_answer = open_service_llm_call(system_prompt=prompt, user_prompt=f"Request: {user_prompt}", model=model, seed=1)
+            else:
+                raise ValueError
+            messages_display.chat_message("assistant").write(llm_answer)
 
     collection.delete(ids=[DB_INJECTION_DOC_ID])
 
@@ -162,5 +167,6 @@ It generates context-aware responses—think customer support, research, or cont
 A practical, efficient solution for businesses needing trustworthy, up-to-date AI outputs.""",
         module_nr=module_nr,
         session_key=f"module_{module_nr}",
+        render_exercises_with_level_selectbox=True,
         exercises=[partial(display_exercise_rag_poisoning)]
     )

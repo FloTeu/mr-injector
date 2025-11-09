@@ -3,7 +3,7 @@ from contextlib import suppress
 
 import chromadb
 import requests
-from chromadb import EmbeddingFunction, Documents, Embeddings
+from chromadb import EmbeddingFunction, Documents, Embeddings, Client as ChromaDBClient
 from chromadb.errors import UniqueConstraintError
 from openai import OpenAI, AzureOpenAI, embeddings
 
@@ -35,14 +35,14 @@ def delete_chromadb_collection(client, col_name: str):
     with suppress(ValueError):
         client.delete_collection(name=col_name)
 
-def create_chromadb_collection(client, col_name: str, embedding_function, ensure_new: bool = False) -> chromadb.Collection:
+def create_chromadb_collection(client: ChromaDBClient, col_name: str, embedding_function, ensure_new: bool = False) -> chromadb.Collection:
     # ensure collection does not already exist
     if ensure_new:
         delete_chromadb_collection(client, col_name)
 
     # Create or get existing collection
     try:
-        return client.create_collection(
+        return client.get_or_create_collection(
             name=col_name,
             embedding_function=embedding_function
         )
@@ -56,12 +56,17 @@ def add_to_collection(docs: list[Document], collection: chromadb.Collection):
     """Add documents to collection in batches"""
     batch_size = 100
     for i in range(0, len(docs), batch_size):
+        print(f"Adding documents {i} to {min(i + batch_size, len(docs))} to collection {collection.name}")
         end_idx = min(i + batch_size, len(docs))
-        collection.add(
-            documents=[d.content for d in docs[i:end_idx]],
-            metadatas=[d.meta for d in docs[i:end_idx]],
-            ids=[d.id for d in docs[i:end_idx]]
-        )
+        try:
+            collection.add(
+                documents=[d.content for d in docs[i:end_idx]],
+                metadatas=[d.meta for d in docs[i:end_idx]],
+                ids=[d.id for d in docs[i:end_idx]]
+            )
+        except Exception as e:
+            print(f"Error adding documents to collection: {e}")
+            continue
 
 def semantic_search(collection: chromadb.Collection, query: str, n_results: int = 2):
     """Perform semantic search on the collection"""
@@ -86,4 +91,13 @@ def download_chinebook_db():
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(files_dir)
 
+def download_resume_csv():
+    url = "https://storage.googleapis.com/inovex-prompt-engineering-seminar/resumes.csv"
+    response = requests.get(url)
+    files_dir = get_root_dir() / f"files"
+    resume_file_path = files_dir / f"resumes.csv"
+
+    # Save the ZIP file to the specified path
+    with open(resume_file_path, 'wb') as f:
+        f.write(response.content)
 

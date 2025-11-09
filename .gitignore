@@ -1,4 +1,14 @@
+.DS_Store
+
 # ignore ALL .sqlite3 files
 *.sqlite3
-
-.venv
+__pycache__/
+.venv/
+.env
+chroma_db/
+.streamlit/
+vdi_docs/
+chinook.db
+chinook.zip
+resumes.csv
+science_papers.json

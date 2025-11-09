@@ -75,12 +75,12 @@ def open_service_llm_call(user_prompt: str, model: OpenRouterModels, system_prom
                 {"role": "system", "content": system_prompt or ""},
                 {"role": "user", "content": user_prompt}
             ],
-            "top_p": 1,
+            "top_p": 0,
             "temperature": 0,
             "frequency_penalty": 0,
             "presence_penalty": 0,
             "repetition_penalty": 1,
-            "top_k": 0,
+            "top_k": 1,
             "seed": seed,
         })
     )

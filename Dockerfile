@@ -24,9 +24,7 @@ ENV USE_OPEN_AI_EMBEDDINGS=${USE_OPEN_AI_EMBEDDINGS:-true}
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
-    software-properties-common \
     git \
-    locales \
     && rm -rf /var/lib/apt/lists/*
 
 # Download the latest installer
@@ -60,9 +58,8 @@ RUN bash -c 'if [ -n "$STREAMLIT_PASSWORD" ]; then \
     fi'
 
 
-# Setup virtual environment
+# Setup virtual environment and install dependencies
 RUN uv venv
-RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 RUN uv sync --frozen
 
 EXPOSE 8501
