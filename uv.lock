@@ -496,7 +496,7 @@ wheels = [
 
 [[package]]
 name = "cyclopts"
-version = "4.2.1"
+version = "4.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -506,9 +506,9 @@ dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/51/a67b17fac2530d22216a335bd10f48631412dd824013ea559ec236668f76/cyclopts-4.2.1.tar.gz", hash = "sha256:49bb4c35644e7a9658f706ade4cf1a9958834b2dca4425e2fafecf8a0537fac7", size = 148693 }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/08/f20fe40a5db9cd1c42316de5a26209dd008f30d38eea297f94e744dea463/cyclopts-4.2.4.tar.gz", hash = "sha256:27e1d175df2889aba72cd960c4e34c8b0a501c5b0161e849c72d9fee5903ecbb", size = 149362 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/1d/2b313e157c9c7bba319e42f464d15073d32a81ac4827bdc5b7de38832b3e/cyclopts-4.2.1-py3-none-any.whl", hash = "sha256:17a801faa814988b0307385ef8aaeb6b14b4d64473015a2d66bde9ea13f14d9c", size = 184333 },
+    { url = "https://files.pythonhosted.org/packages/d2/b2/fabcd6020b63b9d9f7a79cfc61b9c03c4e08ccb54f9cf9db9791be5669ef/cyclopts-4.2.4-py3-none-any.whl", hash = "sha256:41054f5e921a4f2b8ab9c839f12a274dec06a19560dc4898ce37cb775ca68ca4", size = 185023 },
 ]
 
 [[package]]
@@ -1304,7 +1304,7 @@ wheels = [
 
 [[package]]
 name = "mcp"
-version = "1.21.0"
+version = "1.21.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1318,11 +1318,13 @@ dependencies = [
     { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "sse-starlette" },
     { name = "starlette" },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
     { name = "uvicorn", marker = "sys_platform != 'emscripten'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/33/54/dd2330ef4611c27ae59124820863c34e1d3edb1133c58e6375e2d938c9c5/mcp-1.21.0.tar.gz", hash = "sha256:bab0a38e8f8c48080d787233343f8d301b0e1e95846ae7dead251b2421d99855", size = 452697 }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/25/4df633e7574254ada574822db2245bbee424725d1b01bccae10bf128794e/mcp-1.21.1.tar.gz", hash = "sha256:540e6ac4b12b085c43f14879fde04cbdb10148a09ea9492ff82d8c7ba651a302", size = 469071 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/47/850b6edc96c03bd44b00de9a0ca3c1cc71e0ba1cd5822955bc9e4eb3fad3/mcp-1.21.0-py3-none-any.whl", hash = "sha256:598619e53eb0b7a6513db38c426b28a4bdf57496fed04332100d2c56acade98b", size = 173672 },
+    { url = "https://files.pythonhosted.org/packages/49/af/01fb42df59ad15925ffc1e2e609adafddd3ac4572f606faae0dc8b55ba0c/mcp-1.21.1-py3-none-any.whl", hash = "sha256:dd35abe36d68530a8a1291daa25d50276d8731e545c0434d6e250a3700dd2a6d", size = 174852 },
 ]
 
 [[package]]
@@ -2486,16 +2488,16 @@ wheels = [
 
 [[package]]
 name = "pydantic-settings"
-version = "2.11.0"
+version = "2.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/c5/dbbc27b814c71676593d1c3f718e6cd7d4f00652cefa24b75f7aa3efb25e/pydantic_settings-2.11.0.tar.gz", hash = "sha256:d0e87a1c7d33593beb7194adb8470fc426e95ba02af83a0f23474a04c9a08180", size = 188394 }
+sdist = { url = "https://files.pythonhosted.org/packages/43/4b/ac7e0aae12027748076d72a8764ff1c9d82ca75a7a52622e67ed3f765c54/pydantic_settings-2.12.0.tar.gz", hash = "sha256:005538ef951e3c2a68e1c08b292b5f2e71490def8589d4221b95dab00dafcfd0", size = 194184 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/d6/887a1ff844e64aa823fb4905978d882a633cfe295c32eacad582b78a7d8b/pydantic_settings-2.11.0-py3-none-any.whl", hash = "sha256:fe2cea3413b9530d10f3a5875adffb17ada5c1e1bab0b2885546d7310415207c", size = 48608 },
+    { url = "https://files.pythonhosted.org/packages/c1/60/5d4751ba3f4a40a6891f24eec885f51afd78d208498268c734e256fb13c4/pydantic_settings-2.12.0-py3-none-any.whl", hash = "sha256:fddb9fd99a5b18da837b29710391e945b1e30c135477f484084ee513adb93809", size = 51880 },
 ]
 
 [[package]]
@@ -3029,15 +3031,15 @@ wheels = [
 
 [[package]]
 name = "secretstorage"
-version = "3.4.0"
+version = "3.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "jeepney" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/31/9f/11ef35cf1027c1339552ea7bfe6aaa74a8516d8b5caf6e7d338daf54fd80/secretstorage-3.4.0.tar.gz", hash = "sha256:c46e216d6815aff8a8a18706a2fbfd8d53fcbb0dce99301881687a1b0289ef7c", size = 19748 }
+sdist = { url = "https://files.pythonhosted.org/packages/32/8a/ed6747b1cc723c81f526d4c12c1b1d43d07190e1e8258dbf934392fc850e/secretstorage-3.4.1.tar.gz", hash = "sha256:a799acf5be9fb93db609ebaa4ab6e8f1f3ed5ae640e0fa732bfea59e9c3b50e8", size = 19871 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/ff/2e2eed29e02c14a5cb6c57f09b2d5b40e65d6cc71f45b52e0be295ccbc2f/secretstorage-3.4.0-py3-none-any.whl", hash = "sha256:0e3b6265c2c63509fb7415717607e4b2c9ab767b7f344a57473b779ca13bd02e", size = 15272 },
+    { url = "https://files.pythonhosted.org/packages/b0/6d/24ebb101484f1911a6be6695b76ce43219caa110ebbe07d8c3a5f3106cca/secretstorage-3.4.1-py3-none-any.whl", hash = "sha256:c55d57b4da3de568d8c3af89dad244ab24c35ca1da8625fc1b550edf005ebc41", size = 15301 },
 ]
 
 [[package]]
