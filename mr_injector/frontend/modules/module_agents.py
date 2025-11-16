@@ -131,13 +131,15 @@ def call_agent(user_prompt: str,
     max_iterations = 10  # Prevent infinite loops
     iteration = 0
 
+    previous_response_id=None
+
     while iteration < max_iterations:
         iteration += 1
         tools = agent_config["tools"] + [
                 {
                     "type": "mcp",
-                    "server_label": "xenogeneic-harlequin-blackbird",
-                    "server_url": "https://xenogeneic-harlequin-blackbird.fastmcp.app/mcp",
+                    "server_label": "mr-injector",
+                    "server_url": "https://mr-injector.fastmcp.app/mcp",
                     "require_approval": "never",
                 },
             ]
@@ -149,9 +151,11 @@ def call_agent(user_prompt: str,
             model=agent_config["model"],
             input=messages[-1]["content"],
             tools=tools,
-            tool_choice="auto"
+            tool_choice="auto",
+            previous_response_id=previous_response_id,
+            store=True,
         )
-
+        previous_response_id = response.id
         assistant_message = response.output[-1]
 
         # Add assistant's response to messages
