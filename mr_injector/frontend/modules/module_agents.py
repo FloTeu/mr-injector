@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import sqlite3
 from sqlite3 import Connection
@@ -9,6 +10,8 @@ from pathlib import Path
 from functools import partial
 
 from openai import OpenAI, AzureOpenAI
+from openai.types.responses import ResponseOutputMessage
+from openai.types.responses.response_output_item import McpListTools, McpCall
 from streamlit.delta_generator import DeltaGenerator
 
 import mr_injector
@@ -17,7 +20,7 @@ from mr_injector.backend.models.llms import OpenAIModels
 from mr_injector.backend.tools import search_web_via_tavily, query_db
 from mr_injector.backend.utils import booleanize, is_presentation_mode
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
-from mr_injector.backend.agent import get_web_agent_config
+from mr_injector.backend.agent import get_agent_config
 from mr_injector.frontend.session import APP_SESSION_KEY
 from mr_injector.frontend.views import display_copy_to_clipboard_button
 
@@ -121,58 +124,56 @@ def call_agent(user_prompt: str,
                run_injection_scan: bool = False,
                stop_after_n_tool_calls: int | None = None):
     api_tool_calls = 0
-
-    # Initialize messages with system prompt
-    messages = [
-        {"role": "system", "content": agent_config["instructions"]},
-        {"role": "user", "content": user_prompt}
-    ]
-
     max_iterations = 10  # Prevent infinite loops
     iteration = 0
-
+    latest_input = user_prompt
     previous_response_id=None
+
+    tools = agent_config["tools"] + [
+        {
+            "type": "mcp",
+            "server_label": "mr-injector",
+            "server_url": "https://mr-injector-feature-4-mcp.fastmcp.app/mcp",
+            "require_approval": "never",
+        },
+    ]
 
     while iteration < max_iterations:
         iteration += 1
-        tools = agent_config["tools"] + [
-                {
-                    "type": "mcp",
-                    "server_label": "mr-injector",
-                    "server_url": "https://mr-injector.fastmcp.app/mcp",
-                    "require_approval": "never",
-                },
-            ]
-        tools[0] = {"type": tools[0]["type"], **tools[0]["function"]}
-        tools[1] = {"type": tools[1]["type"], **tools[1]["function"]}
 
         # Call the responses API with tools
         response = client.responses.create(
             model=agent_config["model"],
-            input=messages[-1]["content"],
+            instructions=agent_config["instructions"],
+            input=latest_input,
             tools=tools,
             tool_choice="auto",
             previous_response_id=previous_response_id,
             store=True,
         )
         previous_response_id = response.id
+        for message in response.output:
+            if isinstance(message, McpListTools):
+                messages = "List MCP tools:\n"
+                for tool in message.tools:
+                    messages += f"- {tool.name}\n"
+                container.chat_message("assistant").write(messages)
+            elif isinstance(message, McpCall):
+                messages = f"Call MCP tool '{message.tool_name}' with arguments: {message.arguments}\n"
+                container.chat_message("assistant").write(messages)
+            elif isinstance(message, ResponseOutputMessage):
+                container.chat_message("assistant").write(message.content[0].text)
+
         assistant_message = response.output[-1]
-
-        # Add assistant's response to messages
-        messages.append(assistant_message.model_dump(exclude_unset=True))
-
         is_tool_call = assistant_message.type == "function_call"
 
         # Check if the assistant wants to call a tool
         if not is_tool_call:
             # No more tool calls, agent is done
-            if assistant_message.content:
-                container.chat_message("assistant").write(assistant_message.content[0].text)
             return False
 
         # Process tool calls
         if is_tool_call:
-            tool_output = None
             function_name = assistant_message.name
             function_args = json.loads(assistant_message.arguments)
 
@@ -190,17 +191,17 @@ def call_agent(user_prompt: str,
                 response_text = ""
                 for i, web_result in enumerate(response_data.get("results", [])):
                     web_result_text = f"""```
-    title: {web_result["title"]}
-    content: {web_result["content"]}
-    url: {web_result["url"]}
-    ```"""
+                        title: {web_result["title"]}
+                        content: {web_result["content"]}
+                        url: {web_result["url"]}
+                    ```"""
                     response_text = response_text + f"\nWeb Result #{i + 1}\n" + web_result_text
 
-                tool_output = {
-                    "tool_call_id": assistant_message.id,
-                    "role": "tool",
-                    "content": response_text
-                }
+                latest_input = [{
+                    "type": "function_call_output",
+                    "call_id": assistant_message.call_id,
+                    "output": response_text
+                }]
 
             elif function_name == "QuerySQLDB":
                 container.chat_message("assistant").write(
@@ -209,14 +210,14 @@ def call_agent(user_prompt: str,
                 response_data = query_db(**function_args, db_connection=db_connection, run_injection_scan=run_injection_scan)
                 response_text = '\n'.join(' '.join(map(str, row)) for row in response_data)
 
-                tool_output = {
-                    "tool_call_id": assistant_message.id,
-                    "role": "tool",
-                    "content": response_text
-                }
-
-        # Add tool results to messages
-        messages.append(tool_output)
+                latest_input = [{
+                    "type": "function_call_output",
+                    "call_id": assistant_message.call_id,
+                    "output": response_text
+                }]
+            else:
+                logging.warning("Tool %s not implemented.", function_name)
+                latest_input = user_prompt
 
     # Max iterations reached
     return False
@@ -233,7 +234,7 @@ def display_exercise_agent_ddos() -> bool | None:
     if not api_key:
         warning_placeholder.warning("Please provide a valid tavily api key in order to solve this exercise")
         return False
-    agent_config = get_web_agent_config(
+    agent_config = get_agent_config(
         instructions="You are a helpful assistant capable to search the web via an API from the service tavily. You can also enumerate and invoke remote MCP tools for extended functionality.",
         include_mcp_tools=True,
     )
@@ -282,8 +283,9 @@ def _setup_db_exercise(
 
     client = st.session_state[APP_SESSION_KEY].client
 
-    agent_config = get_web_agent_config(
+    agent_config = get_agent_config(
         include_db_tool=True,
+        include_web_tool=False,
         model=OpenAIModels.GPT_4o,
         instructions=f"""You are a helpful assistant. \
 You have access to multiple tools including web search via an API from the service tavily \
