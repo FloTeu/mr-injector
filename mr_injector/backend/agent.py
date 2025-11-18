@@ -50,8 +50,14 @@ def get_jailbreaking_agent_config(instructions: str, model: str = "gpt-4o-mini")
     Get configuration for jailbreaking agent instead of creating an assistant.
     Returns a dict with model, instructions, and tools.
     """
+    def _chat_completion_to_response_api_format(chat_completion_format: ChatCompletionFunctionToolParam) -> dict:
+        """Helper function for migrate to response API
+         see: https://platform.openai.com/docs/guides/migrate-to-responses#5-update-function-definitions
+         """
+        return {"type": chat_completion_format["type"], **chat_completion_format["function"]}
+
     return {
         "model": model,
         "instructions": instructions,
-        "tools": [pydantic_function_tool(CallLLM)]
+        "tools": [_chat_completion_to_response_api_format(pydantic_function_tool(CallLLM))]
     }
