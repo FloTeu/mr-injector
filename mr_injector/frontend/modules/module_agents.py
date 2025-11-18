@@ -150,19 +150,19 @@ def call_agent(user_prompt: str,
                     messages += f"- {tool.name}\n"
                 container.chat_message("assistant").write(messages)
             elif isinstance(message, McpCall):
-                messages = f"Call MCP tool '{message.tool_name}' with arguments: {message.arguments}\n"
+                messages = f"**Call MCP tool '{message.name}'** with arguments: {message.arguments}\n"
                 container.chat_message("assistant").write(messages)
             elif isinstance(message, ResponseOutputMessage):
                 container.chat_message("assistant").write(message.content[0].text)
 
         latest_input = []
+        # Check if the assistant wants to call a tool
+        if response.output[-1].type != "function_call":
+            # No more tool calls, agent is done
+            return False
+
         for assistant_message in response.output:
             is_tool_call = assistant_message.type == "function_call"
-
-            # Check if the assistant wants to call a tool
-            if not is_tool_call:
-                # No more tool calls, agent is done
-                return False
 
             # Process tool calls
             if is_tool_call:
