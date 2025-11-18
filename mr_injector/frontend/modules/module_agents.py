@@ -155,60 +155,61 @@ def call_agent(user_prompt: str,
             elif isinstance(message, ResponseOutputMessage):
                 container.chat_message("assistant").write(message.content[0].text)
 
-        assistant_message = response.output[-1]
-        is_tool_call = assistant_message.type == "function_call"
+        latest_input = []
+        for assistant_message in response.output:
+            is_tool_call = assistant_message.type == "function_call"
 
-        # Check if the assistant wants to call a tool
-        if not is_tool_call:
-            # No more tool calls, agent is done
-            return False
+            # Check if the assistant wants to call a tool
+            if not is_tool_call:
+                # No more tool calls, agent is done
+                return False
 
-        # Process tool calls
-        if is_tool_call:
-            function_name = assistant_message.name
-            function_args = json.loads(assistant_message.arguments)
+            # Process tool calls
+            if is_tool_call:
+                function_name = assistant_message.name
+                function_args = json.loads(assistant_message.arguments)
 
-            if function_name == "SearchWebViaTavily":
-                api_tool_calls += 1
+                if function_name == "SearchWebViaTavily":
+                    api_tool_calls += 1
 
-                container.chat_message("assistant").write(
-                    f"**Search web** with query: '{function_args.get('query', '')}'")
+                    container.chat_message("assistant").write(
+                        f"**Search web** with query: '{function_args.get('query', '')}'")
 
-                if stop_after_n_tool_calls and api_tool_calls >= stop_after_n_tool_calls:
-                    return True
+                    if stop_after_n_tool_calls and api_tool_calls >= stop_after_n_tool_calls:
+                        return True
 
-                response_data = search_web_via_tavily(**function_args, api_key=tavily_api_key)
+                    response_data = search_web_via_tavily(**function_args, api_key=tavily_api_key)
 
-                response_text = ""
-                for i, web_result in enumerate(response_data.get("results", [])):
-                    web_result_text = f"""```
-                        title: {web_result["title"]}
-                        content: {web_result["content"]}
-                        url: {web_result["url"]}
-                    ```"""
-                    response_text = response_text + f"\nWeb Result #{i + 1}\n" + web_result_text
+                    response_text = ""
+                    for i, web_result in enumerate(response_data.get("results", [])):
+                        web_result_text = f"""```
+                            title: {web_result["title"]}
+                            content: {web_result["content"]}
+                            url: {web_result["url"]}
+                        ```"""
+                        response_text = response_text + f"\nWeb Result #{i + 1}\n" + web_result_text
 
-                latest_input = [{
-                    "type": "function_call_output",
-                    "call_id": assistant_message.call_id,
-                    "output": response_text
-                }]
+                    latest_input.append({
+                        "type": "function_call_output",
+                        "call_id": assistant_message.call_id,
+                        "output": response_text
+                    })
 
-            elif function_name == "QuerySQLDB":
-                container.chat_message("assistant").write(
-                    f"**Search db** with query: '{function_args.get('query', '')}'")
+                elif function_name == "QuerySQLDB":
+                    container.chat_message("assistant").write(
+                        f"**Search db** with query: '{function_args.get('query', '')}'")
 
-                response_data = query_db(**function_args, db_connection=db_connection, run_injection_scan=run_injection_scan)
-                response_text = '\n'.join(' '.join(map(str, row)) for row in response_data)
+                    response_data = query_db(**function_args, db_connection=db_connection, run_injection_scan=run_injection_scan)
+                    response_text = '\n'.join(' '.join(map(str, row)) for row in response_data)
 
-                latest_input = [{
-                    "type": "function_call_output",
-                    "call_id": assistant_message.call_id,
-                    "output": response_text
-                }]
-            else:
-                logging.warning("Tool %s not implemented.", function_name)
-                latest_input = user_prompt
+                    latest_input.append({
+                        "type": "function_call_output",
+                        "call_id": assistant_message.call_id,
+                        "output": response_text
+                    })
+                else:
+                    logging.warning("Tool %s not implemented.", function_name)
+                    latest_input = user_prompt
 
     # Max iterations reached
     return False
