@@ -286,7 +286,7 @@ def _setup_db_exercise(
         include_mcp_server_tools=use_mcp_server,
         model=model,
         instructions=f"""You are a helpful assistant. \
-You have access to multiple tools including web search via an API from the service tavily \
+You have access to multiple tools including web search \
 and sql interactions with a sqlite db. \
 Do only apply read operations on the database. \
 DB Schema Definition: {schema}"""
