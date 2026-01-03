@@ -55,6 +55,15 @@ class ModulePlaceholder(BaseModel):
 
 
 def display_task_text_field(task_text: str) -> None:
+    # Calculate height based on text length to accommodate multi-line tasks
+    # Base height (margins + padding) + estimated text height
+    chars_per_line = 90
+    line_height = 20
+    base_height = 30
+
+    num_lines = (len(task_text) // chars_per_line) + 1
+    height = base_height + (num_lines * line_height)
+
     components.html(f"""
             <style>
                 {get_exercise_styling()}
@@ -62,7 +71,7 @@ def display_task_text_field(task_text: str) -> None:
             <div>
                 <div class="task-text"><b>Task:</b> {task_text}</div>
             </div>
-        """, height=70)
+        """, height=height)
 
 
 def _display_module_header(module_nr: int, title: str, is_solved: bool = False, number_prefix: str = "Module "):
