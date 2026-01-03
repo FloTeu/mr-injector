@@ -24,6 +24,7 @@ class ModuleNames(BaseStrEnum):
     EXCESSIVE_AGENCY = auto()
     RETRIEVAL_AUGMENTED_GENERATION = auto()
     RETRIEVAL_AUGMENTED_GENERATION_POISONING = auto()
+    HUMAN_AGENT_SIMULATION = auto()
 
 @dataclass
 class IndianaJonesAgentSession:
