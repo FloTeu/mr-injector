@@ -12,6 +12,7 @@ from mr_injector.backend.llm import llm_call
 from mr_injector.backend.utils import booleanize, is_presentation_mode
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.module_prompt_leaking import get_module_prompt_leaking
+from mr_injector.frontend.modules.module_prompt_engineering import get_module_prompt_engineering
 from mr_injector.frontend.modules.module_prompt_injection import get_module_prompt_injection
 from mr_injector.frontend.modules.module_jailbreaking import get_module_jailbreak
 from mr_injector.frontend.modules.module_rag import get_module_rag, DATA_SELECTION_SESSION_KEY
@@ -94,13 +95,14 @@ def init_app_session() -> AppSession:
     modules[ModuleNames.JAILBREAK] = get_module_jailbreak(2)
     modules[ModuleNames.PROMPT_INJECTION] = get_module_prompt_injection(3)
     modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning(4)
+    modules[ModuleNames.PROMPT_ENGINEERING] = get_module_prompt_engineering(5)
     if os.environ.get("TAVILY_API_KEY"):
-        modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(5)
-    modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency(6)
+        modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(6)
+    modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency(7)
 
     if len(RagDocumentSet.to_list()) > 0:# and not is_presentation_mode():
         selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
-        modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag(7)[selected_doc_set]
+        modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag(8)[selected_doc_set]
 
     return AppSession(
         modules=modules,
@@ -158,7 +160,7 @@ for module_name, module in reversed(list(app_session.modules.items())):
         llm_security_pages.insert(0, page)  # Insert at beginning since we're iterating in reverse
     elif module_name in [ModuleNames.UNBOUNDED_CONSUMPTION, ModuleNames.EXCESSIVE_AGENCY]:
         agent_security_pages.insert(0, page)
-    elif module_name in [ModuleNames.RETRIEVAL_AUGMENTED_GENERATION]:
+    elif module_name in [ModuleNames.RETRIEVAL_AUGMENTED_GENERATION, ModuleNames.PROMPT_ENGINEERING]:
         rag_pages.insert(0, page)
 
 # Create navigation with sections
@@ -174,7 +176,7 @@ if llm_security_pages:
 if agent_security_pages:
     pages["Agent Security"] = agent_security_pages
 if rag_pages:
-    pages["RAG"] = rag_pages
+    pages["Prompt Engineering"] = rag_pages
 
 pg = st.navigation(pages, position="top", expanded=True)
 pg.run()
