@@ -79,7 +79,7 @@ def display_exercise_jailbreak(system_prompt: str,
 
 
 def create_agent(app_session: AppSession, client):
-    app_session.agent_session = IndianaJonesAgentSession(thread=None, llm_messages=[])
+    app_session.agent_session = IndianaJonesAgentSession(latest_response_id=None, llm_messages=[])
 
 
 def display_llm_messages(messages: list[dict[str, str]], st_messages):
@@ -125,83 +125,76 @@ def display_indiana_jones_method(
         with st_messages_placeholder:
             display_llm_messages(display_messages, st.container(height=600))
 
-        # Build messages for the agent
-        agent_messages = [
-            {"role": "system", "content": agent_config["instructions"]},
-            {"role": "user", "content": user_prompt}
-        ]
-
-        # Call the chat completions API with tools
-        response = client.chat.completions.create(
+        # Call the responses API with tools
+        response = client.responses.create(
             model=agent_config["model"],
-            messages=agent_messages,
+            instructions=agent_config["instructions"],
+            input=user_prompt,
             tools=agent_config["tools"],
-            tool_choice="auto"
+            store=True,
+            previous_response_id=app_session.agent_session.latest_response_id,
         )
 
-        assistant_message = response.choices[0].message
+        assistant_message = response.output[-1]
 
         function_llm_messages = []
         validation_success = False
 
         # Check if the assistant wants to call a tool
-        if assistant_message.tool_calls:
-            tool_outputs = []
-            for tool_call in assistant_message.tool_calls:
-                function_name = tool_call.function.name
+        if assistant_message.type == "function_call":
+            latest_input = []
+            function_name = assistant_message.name
 
-                if function_name == "CallLLM":
-                    llm_call_kwargs = json.loads(tool_call.function.arguments)
-                    function_llm_messages.append(
-                        {"role": "user", "content": llm_call_kwargs["user_prompt"], "avatar": "🤠"})
-                    with st_messages_placeholder:
-                        display_llm_messages([*display_messages, *function_llm_messages], st.container(height=600))
+            if function_name == "CallLLM":
+                llm_call_kwargs = json.loads(assistant_message.arguments)
+                function_llm_messages.append(
+                    {"role": "user", "content": llm_call_kwargs["user_prompt"], "avatar": "🤠"})
+                with st_messages_placeholder:
+                    display_llm_messages([*display_messages, *function_llm_messages], st.container(height=600))
 
-                    if isinstance(model, OpenRouterModels):
-                        llm_response = open_service_llm_call(model=model, messages=app_session.agent_session.llm_messages, **llm_call_kwargs)
-                    else:
-                        llm_response = llm_call(client=client, model=model, messages=app_session.agent_session.llm_messages,
-                                        **llm_call_kwargs)
-                    function_llm_messages.append({"role": "assistant", "content": llm_response})
-                    with st_messages_placeholder:
-                        display_llm_messages([*display_messages, *function_llm_messages], st.container(height=600))
-                    validation_success = validation_fn(llm_response)
+                if isinstance(model, OpenRouterModels):
+                    llm_response = open_service_llm_call(model=model, messages=app_session.agent_session.llm_messages, **llm_call_kwargs)
                 else:
-                    raise ValueError(f"Function name {function_name} not known")
+                    llm_response = llm_call(client=client, model=model, messages=app_session.agent_session.llm_messages,
+                                    **llm_call_kwargs)
+                function_llm_messages.append({"role": "assistant", "content": llm_response})
+                with st_messages_placeholder:
+                    display_llm_messages([*display_messages, *function_llm_messages], st.container(height=600))
+                validation_success = validation_fn(llm_response)
+            else:
+                raise ValueError(f"Function name {function_name} not known")
 
-                app_session.agent_session.llm_messages.extend(function_llm_messages)
 
-                tool_outputs.append({
-                    "tool_call_id": tool_call.id,
-                    "role": "tool",
-                    "content": llm_response
-                })
+            latest_input.append({
+                "type": "function_call_output",
+                "call_id": assistant_message.call_id,
+                "output": llm_response
+            })
 
-            # Add tool results to messages and call again
-            agent_messages.append(assistant_message)
-            for tool_output in tool_outputs:
-                agent_messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_output["tool_call_id"],
-                    "content": tool_output["content"]
-                })
-
-            # Get final response from agent
-            response = client.chat.completions.create(
+            # Get final response from agent with tool results
+            response = client.responses.create(
                 model=agent_config["model"],
-                messages=agent_messages,
-                tools=agent_config["tools"],
-                tool_choice="auto"
+                instructions=agent_config["instructions"],
+                input=latest_input,
+                #tools=agent_config["tools"], # no tool call, as we want a customer facing message
+                store=True,
+                previous_response_id=response.id,
             )
+            assistant_message = response.output[-1]
 
-            agent_response = response.choices[0].message.content
+            if  assistant_message.type == "message":
+                function_llm_messages.append(
+                    {"role": "user", "content": assistant_message.content[0].text, "avatar": "🤠"})
+
         else:
-            agent_response = assistant_message.content
+            function_llm_messages.append(
+                {"role": "user", "content": assistant_message.content[0].text, "avatar": "🤠"})
 
+        app_session.agent_session.llm_messages.extend(function_llm_messages)
+        app_session.agent_session.latest_response_id = response.id
         with st_messages_placeholder:
             display_llm_messages(
-                [*display_messages, *function_llm_messages,
-                 {"role": "assistant", "content": agent_response, "avatar": "🤠"}],
+                [*display_messages, *function_llm_messages],
                 st.container(height=600))
         return validation_success
 

@@ -26,6 +26,7 @@ class OpenAIModels(BaseStrEnum):
     GPT_35_TURBO = "gpt-3.5-turbo"
     GPT_4o_MINI = "gpt-4o-mini"
     GPT_4o = "gpt-4o"
+    GPT_4_1 = "gpt-4.1"
 
 class LLMValidationResult(StrEnum):
     YES = auto()

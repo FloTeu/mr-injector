@@ -13,9 +13,11 @@ class CallLLM(BaseModel):
 
 
 class SearchWebViaTavily(BaseModel):
+    """Use this tool to search the web via the tavily api"""
     query: Annotated[str, Field(description="The web search executed by tavily api")]
 
 class QuerySQLDB(BaseModel):
+    """Use this tool to query a sqlite3 database"""
     query: Annotated[str, Field(description="The sqlite3 SQL statement")]
 
 def search_web_via_tavily(query: str, api_key: str) -> dict:

@@ -27,7 +27,7 @@ class ModuleNames(BaseStrEnum):
 @dataclass
 class IndianaJonesAgentSession:
     """Agent fpr indiana jones jailbreaking method"""
-    thread: Thread
+    latest_response_id: str | None
     llm_messages: list[dict[str,str]]
 
 
