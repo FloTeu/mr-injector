@@ -17,6 +17,7 @@ APP_SESSION_KEY = "app_session"
 
 class ModuleNames(BaseStrEnum):
     PROMPT_ENGINEERING = auto()
+    PROMPT_ENGINEERING_ADVANCED = auto()
     PROMPT_LEAKAGE = auto()
     PROMPT_INJECTION = auto()
     JAILBREAK = auto()
