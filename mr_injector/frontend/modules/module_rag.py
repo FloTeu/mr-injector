@@ -53,15 +53,13 @@ def display_prompt_editor(key_suffix: str, document_set: RagDocumentSet, include
 
     CONTEXT: str = st.text_area("Context", CONTEXT, height=200, key=f"rag_context_{key_suffix}")
 
-    return f"""
-    {ROLE}
-    {INSTRUCTION}
-    Context:
-    {CONTEXT}
-    {OUTPUT_FORMAT}
-    Question: {{{{question}}}}
-    Answer:
-    """
+    return f"""{ROLE}
+{INSTRUCTION}
+Context:
+{CONTEXT}
+{OUTPUT_FORMAT}
+Question: {{{{question}}}}
+Answer:"""
 
 
 def execute_rag(question: str, prompt: str, client: openai.OpenAI | openai.AzureOpenAI, collection, n_docs: int = 5) -> tuple[list[Document], str]:
@@ -83,17 +81,20 @@ def execute_rag(question: str, prompt: str, client: openai.OpenAI | openai.Azure
 
 def display_rag_results(docs: list[Document], response: str):
     st.divider()
-    st.write("#### Documents")
-    tabs = st.tabs([f"Document #{i + 1}" for i in range(len(docs))])
-    for i, doc in enumerate(docs):
-        with tabs[i]:
-            st.write(f"##### Document #{i + 1}")
-            st.text("Embedding Input Text\n" + doc.content)
-            st.text("Document Meta\n")
-            st.write(doc.meta)
+    with st.expander("Retrieved Documents"):
+        tabs = st.tabs([f"Document #{i + 1}" for i in range(len(docs))])
+        for i, doc in enumerate(docs):
+            with tabs[i]:
+                st.write(f"##### Document #{i + 1}")
+                st.text("Embedding Input Text")
+                st.info(doc.content)
+                st.text("Document Meta\n")
+                st.write(doc.meta)
     st.divider()
+
     st.write("#### Answer")
     st.write(response)
+
 
 
 def display_exercise_rag(task_text: str,
@@ -109,15 +110,22 @@ def display_exercise_rag(task_text: str,
     # Get ChromaDB collection
     collection = get_chromadb_collection(doc_set)
 
-    prompt = display_prompt_editor(hash_text(task_text), doc_set, include_all_relevant_meta_in_system_prompt)
-    st.write("#### System prompt")
-    st.text(prompt)
+    col1, col2 = st.columns(2)
 
-    n_docs = st.number_input("Number of context documents", value=5)
+    with col1:
+        st.markdown("### Developer View")
+        prompt = display_prompt_editor(hash_text(task_text), doc_set, include_all_relevant_meta_in_system_prompt)
+        st.markdown("#### Resulting System Prompt")
+        st.caption("The inputs form the system prompt, which guides the LLM:")
+        st.code(prompt, language="markdown")
+        n_docs = st.number_input("Number of context documents", value=5, key=f"n_docs_{hash_text(task_text)}")
 
-    question = st.text_input("Question:", key=f"rag_question_{hash_text(task_text)}", value=question)
+    with col2:
+        st.markdown("### User View")
+        question = st.text_input("Question:", key=f"rag_question_{hash_text(task_text)}", value=question)
+        run_rag = st.button("Run RAG pipeline", key=f"rag_run_button_{hash_text(task_text)}")
 
-    if st.button("Run RAG pipeline", key=f"rag_run_button_{hash_text(task_text)}"):
+    if run_rag:
         retrieved_docs, response = execute_rag(question, prompt, client, collection, n_docs=n_docs)
         display_rag_results(retrieved_docs, response)
         if doc_validation_fn is not None:
@@ -260,7 +268,7 @@ A practical, efficient solution for businesses needing trustworthy, up-to-date A
         session_key=session_key,
         data_selection_fn=display_data_selection,
         exercises=exercises,
-        render_exercises_with_level_selectbox=True
+        render_exercises_with_level_selectbox=True,
     )
 
 

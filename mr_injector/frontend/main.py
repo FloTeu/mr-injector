@@ -3,6 +3,8 @@ import os
 import torch
 import streamlit as st
 
+st.set_page_config(layout="wide")
+
 from functools import partial
 
 from streamlit.navigation.page import StreamlitPage
@@ -29,27 +31,30 @@ torch.classes.__path__ = []
 
 def display_general(first_module: StreamlitPage):
     client = display_open_ai_api_key_input()
-    display_header_row()
-    st.subheader("Introduction")
-    button_label = "Get started"
-    st.info(f'To directly start with the modules, please use the tabs above (or click "{button_label}")')
 
-    if st.button(button_label):
-        st.switch_page(first_module)
+    _, col, _ = st.columns([1, 4, 1])
+    with col:
+        display_header_row()
+        st.subheader("Introduction")
+        button_label = "Get started"
+        st.info(f'To directly start with the modules, please use the tabs above (or click "{button_label}")')
 
-    st.write("""
-    In an increasingly digital world, understanding the security risks associated with Large Language Models (LLMs) is more crucial than ever. Mr. Injector is a web app designed to empower users with a foundational knowledge of these risks through engaging and interactive learning modules.
+        if st.button(button_label):
+            st.switch_page(first_module)
 
-##### What You Can Expect
-* **Interactive Learning:** Take on the role of a hacker as you navigate through various modules that simulate real-world security challenges.
-* **Comprehensive Modules:** Each module delves into specific risks, providing insights into how LLMs can be exploited and the potential consequences of these vulnerabilities.
-* **Hands-On Experience:** By stepping into the shoes of a hacker, you'll gain a unique perspective that enhances your understanding of security measures and best practices.
+        st.write("""
+        In an increasingly digital world, understanding the security risks associated with Large Language Models (LLMs) is more crucial than ever. Mr. Injector is a web app designed to empower users with a foundational knowledge of these risks through engaging and interactive learning modules.
 
-Join us on this journey to become more informed and vigilant in the face of evolving security threats. With Mr. Injector, you’re not just learning about risks; you’re experiencing them firsthand. Let’s get started!
-    """)
+    ##### What You Can Expect
+    * **Interactive Learning:** Take on the role of a hacker as you navigate through various modules that simulate real-world security challenges.
+    * **Comprehensive Modules:** Each module delves into specific risks, providing insights into how LLMs can be exploited and the potential consequences of these vulnerabilities.
+    * **Hands-On Experience:** By stepping into the shoes of a hacker, you'll gain a unique perspective that enhances your understanding of security measures and best practices.
 
-    if client is not None:
-        display_llm_playground()
+    Join us on this journey to become more informed and vigilant in the face of evolving security threats. With Mr. Injector, you’re not just learning about risks; you’re experiencing them firsthand. Let’s get started!
+        """)
+
+        if client is not None:
+            display_llm_playground()
 
 
 def display_llm_playground():
@@ -78,18 +83,25 @@ def display_open_ai_api_key_input() :
 def display_module(module: ModuleView, next_module: StreamlitPage):
     client = display_open_ai_api_key_input()
     if client is not None:
-        display_header_row()
-        display_module_progress_bar()
-        module.init_placeholders()
-        module.display()
+        # Determine container based on layout preference
+        if module.layout == "centered":
+            _, container, _ = st.columns([1, 4, 1])
+        else:
+            container = st.container()
 
-        # Add Next Module button at the bottom
-        if next_module is not None and module.is_solved():
-            st.divider()
-            col1, col2, col3 = st.columns([1, 1, 1])
-            with col2:
-                if st.button("➡️ Next Module", use_container_width=True, type="secondary"):
-                    st.switch_page(next_module)
+        with container:
+            display_header_row()
+            display_module_progress_bar()
+            module.init_placeholders()
+            module.display()
+
+            # Add Next Module button at the bottom
+            if next_module is not None and module.is_solved():
+                st.divider()
+                col1, col2, col3 = st.columns([1, 1, 1])
+                with col2:
+                    if st.button("➡️ Next Module", use_container_width=True, type="secondary"):
+                        st.switch_page(next_module)
 
 def init_app_session() -> AppSession:
     modules: dict[ModuleNames, ModuleView] = {}

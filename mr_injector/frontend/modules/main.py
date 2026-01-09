@@ -116,7 +116,8 @@ class ModuleView:
                  render_exercises_with_level_selectbox: bool = False,
                  jump_to_next_level: bool = False,
                  show_solved_message_by_session: bool = False,
-                 description: str = ""):
+                 description: str = "",
+                 layout: str = "centered"):
         self.title = title
         self.description = description
         self.module_nr = module_nr
@@ -127,6 +128,7 @@ class ModuleView:
         self.show_solved_message_by_session = show_solved_message_by_session
         self.data_selection_fn = data_selection_fn
         self.placeholder: ModulePlaceholder | None = None
+        self.layout = layout
 
         self.init_session()
 
