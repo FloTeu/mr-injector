@@ -98,24 +98,31 @@ def display_tool_view(tool_name):
                 if "Search" in tool_name:
                     system_prompt = "You are a Search Engine. Provide a short, factual answer."
                 elif "Calculator" in tool_name:
-                    system_prompt = "You are a Calculator. Solve the math problem. Output only the number."
+                    system_prompt = """You are a Calculator. Solve the math problem. Lets think step by step.
+                    The output format is markdown. Output all math using $$ delimiters for blocks and $ for inline, ensuring all LaTeX commands use double-backslashes (e.g., \\text{}) for Python string compatibility; do not use \[ \] or \( \).
+                    """
                 else:
                     system_prompt = "You are a helpful tool."
 
                 result = llm_call(client, system_prompt=system_prompt, user_prompt=query, model=OpenAIModels.GPT_4o_MINI)
 
             st.success("### Result")
-            st.code(result)
+            if "Calculator" in tool_name:
+                st.markdown(result)
+            else:
+                st.code(result)
 
 def display_user_view():
     st.subheader("Role: User")
     st.markdown("Challenge the Agent with these prompts (or define a task yourself):")
     prompts = [
         "What is the square root of the population of France?",
-        "Who is the artist with the most albums in the music database?",
+        "Who is the most successful artist in terms of total invoice amount? When was his first album released?",
+        "Who is the artist with the most albums in the music database? How many more albums does he have than the artist with the second most albums?",
+        "Find the city with the most customers. Search for its current population. Calculate the percentage of customers relative to the population.",
+        "Find the total invoice amount for customer 'Bjørn Hansen'. Search for the current USD to EUR exchange rate. Calculate the amount in EUR.",
         "Delete the table 'artists'?",
         "List 3 tracks by the band 'AC/DC' and their prices per unit.",
-        "Who is the most successful artist in terms of total invoice amount? When was his first album released?",
         "Find the email of the customer named 'Frank Ralston'."
     ]
     for p in prompts:
@@ -125,7 +132,7 @@ def display_human_agent_simulation_exercise() -> bool | None:
     st.markdown("## Human Agent Simulation")
     st.info("This is a group exercise. Assign roles: 1 Agent, 1 User, multiple Tools.")
 
-    role = st.selectbox("Select your Role", ["Agent (Orchestrator)", "Tool: Search Engine", "Tool: Calculator", "Tool: Database", "User"])
+    role = st.selectbox("Select your Role", ["Agent (Orchestrator)", "Tool: Search Engine", "Tool: Database",  "Tool: Calculator", "User"])
 
     if role == "Agent (Orchestrator)":
         display_agent_view()
