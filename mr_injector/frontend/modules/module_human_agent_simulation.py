@@ -1,7 +1,10 @@
+import sqlite3
 import streamlit as st
 from mr_injector.backend.llm import llm_call
 from mr_injector.backend.models.llms import OpenAIModels
+from mr_injector.backend.tools import query_db
 from mr_injector.frontend.modules.main import ModuleView
+from mr_injector.frontend.modules.module_agents import get_db_schema
 from mr_injector.frontend.session import APP_SESSION_KEY
 
 def display_agent_view():
@@ -16,15 +19,24 @@ def display_agent_view():
 
     client = st.session_state[APP_SESSION_KEY].client
 
+    agent_system_prompt = """You are an AI Agent Planner. Break down the user request into subtasks that can be solved by the following tools:
+    - Search Engine (General knowledge, current events)
+    - Calculator (Math operations)
+    - Database (Music Store info: Artists, Albums, Invoices, Customers)
+
+    Format your response as a bulleted list of steps. For each step, specify the Tool and the Input.
+
+    Example:
+    User Request: What is the square root of the population of France?
+    Plan:
+    - **Tool**: Search Engine
+        **Input**: What is the current population of France?
+    - **Tool**: Calculator
+        **Input**: Calculate the square root of [population number].
+    """
     if st.button("Generate Plan"):
         with st.spinner("Thinking..."):
-            system_prompt = """You are an AI Agent Planner. Break down the user request into subtasks that can be solved by the following tools:
-- Search Engine (General knowledge, current events)
-- Calculator (Math operations)
-- Database (Company specific data)
-
-Format your response as a bulleted list of steps. For each step, specify the Tool and the Input."""
-            plan = llm_call(client, system_prompt=system_prompt, user_prompt=user_request, model=OpenAIModels.GPT_4o_MINI)
+            plan = llm_call(client, system_prompt=agent_system_prompt, user_prompt=user_request, model=OpenAIModels.GPT_4_1)
             st.session_state.agent_plan = plan
 
     if "agent_plan" in st.session_state:
@@ -36,10 +48,18 @@ Format your response as a bulleted list of steps. For each step, specify the Too
 
         tool_outputs = st.text_area("Tool Outputs (Paste answers here)", height=150, placeholder="Search Engine: The population is 67 million.\nCalculator: Sqrt(67000000) is 8185.")
 
+        if st.button("Refine Plan"):
+            with st.spinner("Replanning..."):
+                replanning_prompt = f"User Request: {user_request}\n\nCurrent Plan:\n{st.session_state.agent_plan}\n\nTool Outputs (New Info):\n{tool_outputs}\n\nPlease provide an updated plan considering the new information. Use new tools if necessary."
+                new_plan = llm_call(client, system_prompt=agent_system_prompt, user_prompt=replanning_prompt, model=OpenAIModels.GPT_4_1)
+                st.session_state.agent_plan = new_plan
+                st.rerun()
+
         if st.button("Generate Final Response"):
             with st.spinner("Synthesizing..."):
-                system_prompt = "You are an AI Agent. Answer the user request based ONLY on the provided tool outputs."
-                final_response = llm_call(client, system_prompt=system_prompt, user_prompt=f"User Request: {user_request}\n\nContext:\n{tool_outputs}", model=OpenAIModels.GPT_4o_MINI)
+                plan_text = st.session_state.get("agent_plan", "")
+                agent_system_prompt = f"You are an AI Agent. You created the following plan to solve the user request:\n{plan_text}\nAnswer the user request based on the plan and the provided tool outputs."
+                final_response = llm_call(client, system_prompt=agent_system_prompt, user_prompt=f"User Request: {user_request}\n\nContext:\n{tool_outputs}", model=OpenAIModels.GPT_4o_MINI)
                 st.success("### Final Response")
                 st.write(final_response)
 
@@ -52,16 +72,38 @@ def display_tool_view(tool_name):
 
     if st.button("Execute Tool"):
         with st.spinner("Processing..."):
-            if "Search" in tool_name:
-                system_prompt = "You are a Search Engine. Provide a short, factual answer."
-            elif "Calculator" in tool_name:
-                system_prompt = "You are a Calculator. Solve the math problem. Output only the number."
-            elif "Database" in tool_name:
-                system_prompt = "You are a Corporate Database. You have info about: Employees, Sales, Products. Invent plausible data if asked."
-            else:
-                system_prompt = "You are a helpful tool."
+            result = ""
 
-            result = llm_call(client, system_prompt=system_prompt, user_prompt=query, model=OpenAIModels.GPT_4o_MINI)
+            if "Database" in tool_name:
+                conn = sqlite3.connect('files/chinook.db')
+                cursor = conn.cursor()
+                # Real Database Logic (Text-to-SQL)
+                schema_context = get_db_schema(cursor)
+                sql_system_prompt = f"You are a SQL Expert for a SQLite database (Chinook Music Store). Given the user query, output ONLY the raw SQL query to retrieve the answer. Do not use Markdown formatting or explanations.\nSchema:{schema_context}"
+
+                try:
+                    # 1. Generate SQL
+                    generated_sql = llm_call(client, system_prompt=sql_system_prompt, user_prompt=query, model=OpenAIModels.GPT_4o_MINI)
+                    clean_sql = generated_sql.replace("```sql", "").replace("```", "").strip()
+
+                    # 2. Execute SQL
+                    rows = query_db(clean_sql, conn, run_injection_scan=True)
+                    conn.close()
+
+                    result = f"SQL Executed: {clean_sql}\n\nQuery Result:\n{rows}"
+                except Exception as e:
+                    result = f"Error querying database: {str(e)}"
+
+            else:
+                if "Search" in tool_name:
+                    system_prompt = "You are a Search Engine. Provide a short, factual answer."
+                elif "Calculator" in tool_name:
+                    system_prompt = "You are a Calculator. Solve the math problem. Output only the number."
+                else:
+                    system_prompt = "You are a helpful tool."
+
+                result = llm_call(client, system_prompt=system_prompt, user_prompt=query, model=OpenAIModels.GPT_4o_MINI)
+
             st.success("### Result")
             st.code(result)
 
@@ -70,9 +112,11 @@ def display_user_view():
     st.markdown("Challenge the Agent with these prompts (or define a task yourself):")
     prompts = [
         "What is the square root of the population of France?",
-        "Who is the CEO of Microsoft and how many letters are in their name?",
-        "Compare the GDP of Brazil and Italy.",
-        "Find the email of the top sales person in the Database."
+        "Who is the artist with the most albums in the music database?",
+        "Delete the table 'artists'?",
+        "List 3 tracks by the band 'AC/DC' and their prices per unit.",
+        "Who is the most successful artist in terms of total invoice amount? When was his first album released?",
+        "Find the email of the customer named 'Frank Ralston'."
     ]
     for p in prompts:
         st.info(p)
@@ -99,4 +143,3 @@ def get_module_human_agent_simulation(module_nr: int) -> ModuleView:
         session_key=f"module_{module_nr}",
         exercises=[display_human_agent_simulation_exercise]
     )
-

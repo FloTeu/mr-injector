@@ -103,34 +103,47 @@ def display_module(module: ModuleView, next_module: StreamlitPage):
                     if st.button("➡️ Next Module", use_container_width=True, type="secondary"):
                         st.switch_page(next_module)
 
-def init_app_session() -> AppSession:
-    def get_rag_module(module_nr: int) -> ModuleView:
-        selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
-        return get_module_rag(module_nr)[selected_doc_set]
+def get_module_definitions():
+    rag_module = None
+    if len(RagDocumentSet.to_list()) > 0:
+         def get_rag_module(module_nr: int) -> ModuleView:
+            selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
+            return get_module_rag(module_nr)[selected_doc_set]
+         rag_module = (ModuleNames.RETRIEVAL_AUGMENTED_GENERATION, get_rag_module)
 
-    module_definitions = [
-        (ModuleNames.PROMPT_LEAKAGE, get_module_prompt_leaking),
-        (ModuleNames.JAILBREAK, get_module_jailbreak),
-        (ModuleNames.PROMPT_INJECTION, get_module_prompt_injection),
-        (ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING, get_module_rag_poisoning),
+    structure = [
+        ("LLM Security", [
+            (ModuleNames.PROMPT_LEAKAGE, get_module_prompt_leaking),
+            (ModuleNames.JAILBREAK, get_module_jailbreak),
+            (ModuleNames.PROMPT_INJECTION, get_module_prompt_injection),
+            (ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING, get_module_rag_poisoning),
+        ]),
+        ("Agent Security", []),
+        ("Prompt Engineering", [
+            (ModuleNames.PROMPT_ENGINEERING, get_module_prompt_engineering),
+            (ModuleNames.PROMPT_ENGINEERING_ADVANCED, get_module_prompt_engineering_advanced),
+            (ModuleNames.HUMAN_AGENT_SIMULATION, get_module_human_agent_simulation),
+        ])
     ]
 
+    agent_sec = structure[1][1]
     if os.environ.get("TAVILY_API_KEY"):
-        module_definitions.append((ModuleNames.UNBOUNDED_CONSUMPTION, get_module_unbounded_consumption))
+        agent_sec.append((ModuleNames.UNBOUNDED_CONSUMPTION, get_module_unbounded_consumption))
+    agent_sec.append((ModuleNames.EXCESSIVE_AGENCY, get_module_excessive_agency))
 
-    module_definitions.extend([
-        (ModuleNames.EXCESSIVE_AGENCY, get_module_excessive_agency),
-        (ModuleNames.PROMPT_ENGINEERING, get_module_prompt_engineering),
-        (ModuleNames.PROMPT_ENGINEERING_ADVANCED, get_module_prompt_engineering_advanced),
-        (ModuleNames.HUMAN_AGENT_SIMULATION, get_module_human_agent_simulation),
-    ])
+    if rag_module:
+        structure[2][1].append(rag_module)
 
-    if len(RagDocumentSet.to_list()) > 0:  # and not is_presentation_mode():
-        module_definitions.append((ModuleNames.RETRIEVAL_AUGMENTED_GENERATION, get_rag_module))
+    return structure
 
-    modules: dict[ModuleNames, ModuleView] = {}
-    for i, (module_name, module_factory) in enumerate(module_definitions, start=1):
-        modules[module_name] = module_factory(i)
+def init_app_session() -> AppSession:
+    structure = get_module_definitions()
+    modules = {}
+    i = 1
+    for _, cat_modules in structure:
+         for name, factory in cat_modules:
+             modules[name] = factory(i)
+             i += 1
 
     return AppSession(
         modules=modules,
@@ -149,62 +162,54 @@ if APP_SESSION_KEY not in st.session_state:
 else:
     app_session = st.session_state[APP_SESSION_KEY]
 
-# Group modules by category and create page mapping
-llm_security_pages: list[st.Page] = []
-agent_security_pages: list[st.Page] = []
-rag_pages: list[st.Page] = []
 
-# Create a list of module items to properly map next modules
-module_items_list = list(app_session.modules.items())
-module_to_next_page: dict[ModuleNames, ModuleNames | None] = {}
+# Reconstruct structure to organize pages
+structure = get_module_definitions()
 
-# First create a mapping of module_name to next_module_name
-for idx, (module_name, _) in enumerate(module_items_list):
-    if idx < len(module_items_list) - 1:
-        next_module_name = module_items_list[idx + 1][0]
-        module_to_next_page[module_name] = next_module_name
+all_modules_flat = []
+name_to_cat = {}
+for cat, mods in structure:
+    for name, _ in mods:
+        all_modules_flat.append(name)
+        name_to_cat[name] = cat
+
+module_to_next_name = {}
+for idx, name in enumerate(all_modules_flat):
+    if idx < len(all_modules_flat) - 1:
+        module_to_next_name[name] = all_modules_flat[idx+1]
     else:
-        module_to_next_page[module_name] = None
+        module_to_next_name[name] = None
 
-# Temporary storage for pages
-temp_pages: dict[ModuleNames, st.Page] = {}
+# Create pages in reverse order to resolve next_module
+created_pages = {}
+sections = {cat: [] for cat, _ in structure}
 
-# Now recreate pages with proper next_module references using reverse iteration
-for module_name, module in reversed(list(app_session.modules.items())):
-    next_module_name = module_to_next_page[module_name]
-    next_page = temp_pages.get(next_module_name) if next_module_name else None
+for name in reversed(all_modules_flat):
+    module = app_session.modules[name]
+    next_name = module_to_next_name[name]
+    next_page = created_pages.get(next_name)
 
     page = st.Page(
         partial(display_module, module, next_module=next_page),
         title=module.title,
         icon="✅" if module.is_solved() else None,
-        url_path=module_name.lower()
+        url_path=name.lower()
     )
+    created_pages[name] = page
+    sections[name_to_cat[name]].insert(0, page)
 
-    temp_pages[module_name] = page
+# Build navigation
+pages = {}
 
-    # Categorize modules
-    if module_name in [ModuleNames.PROMPT_LEAKAGE, ModuleNames.JAILBREAK, ModuleNames.PROMPT_INJECTION, ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING]:
-        llm_security_pages.insert(0, page)  # Insert at beginning since we're iterating in reverse
-    elif module_name in [ModuleNames.UNBOUNDED_CONSUMPTION, ModuleNames.EXCESSIVE_AGENCY]:
-        agent_security_pages.insert(0, page)
-    elif module_name in [ModuleNames.RETRIEVAL_AUGMENTED_GENERATION, ModuleNames.PROMPT_ENGINEERING, ModuleNames.PROMPT_ENGINEERING_ADVANCED, ModuleNames.HUMAN_AGENT_SIMULATION]:
-        rag_pages.insert(0, page)
+first_module_page = created_pages.get(all_modules_flat[0]) if all_modules_flat else None
+pages["Introduction"] = [
+    st.Page(partial(display_general, first_module=first_module_page),
+            title="Intro", icon="🧐", default=True)
+]
 
-# Create navigation with sections
-pages = {
-    "Introduction": [
-        st.Page(partial(display_general, first_module=llm_security_pages[0] if llm_security_pages else None),
-                title="Intro", icon="🧐", default=True)
-    ]
-}
-
-if llm_security_pages:
-    pages["LLM Security"] = llm_security_pages
-if agent_security_pages:
-    pages["Agent Security"] = agent_security_pages
-if rag_pages:
-    pages["Prompt Engineering"] = rag_pages
+for cat, _ in structure:
+    if sections[cat]:
+        pages[cat] = sections[cat]
 
 pg = st.navigation(pages, position="top", expanded=True)
 pg.run()
