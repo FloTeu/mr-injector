@@ -67,7 +67,7 @@ def display_tool_view(tool_name):
 
 def display_user_view():
     st.subheader("Role: User")
-    st.markdown("Challenge the Agent with these prompts:")
+    st.markdown("Challenge the Agent with these prompts (or define a task yourself):")
     prompts = [
         "What is the square root of the population of France?",
         "Who is the CEO of Microsoft and how many letters are in their name?",
@@ -90,7 +90,7 @@ def display_human_agent_simulation_exercise() -> bool | None:
     elif role == "User":
         display_user_view()
 
-    return True
+    return None
 
 def get_module_human_agent_simulation(module_nr: int) -> ModuleView:
     return ModuleView(

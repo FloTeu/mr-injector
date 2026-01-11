@@ -104,21 +104,33 @@ def display_module(module: ModuleView, next_module: StreamlitPage):
                         st.switch_page(next_module)
 
 def init_app_session() -> AppSession:
-    modules: dict[ModuleNames, ModuleView] = {}
-    modules[ModuleNames.PROMPT_ENGINEERING] = get_module_prompt_engineering(1)
-    modules[ModuleNames.PROMPT_ENGINEERING_ADVANCED] = get_module_prompt_engineering_advanced(2)
-    modules[ModuleNames.PROMPT_LEAKAGE] = get_module_prompt_leaking(3)
-    modules[ModuleNames.JAILBREAK] = get_module_jailbreak(4)
-    modules[ModuleNames.PROMPT_INJECTION] = get_module_prompt_injection(5)
-    modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING] = get_module_rag_poisoning(6)
-    if os.environ.get("TAVILY_API_KEY"):
-        modules[ModuleNames.UNBOUNDED_CONSUMPTION] = get_module_unbounded_consumption(7)
-    modules[ModuleNames.EXCESSIVE_AGENCY] = get_module_excessive_agency(8)
-    modules[ModuleNames.HUMAN_AGENT_SIMULATION] = get_module_human_agent_simulation(9)
-
-    if len(RagDocumentSet.to_list()) > 0:# and not is_presentation_mode():
+    def get_rag_module(module_nr: int) -> ModuleView:
         selected_doc_set: RagDocumentSet = st.session_state.get(DATA_SELECTION_SESSION_KEY, RagDocumentSet.VDI_DOCS)
-        modules[ModuleNames.RETRIEVAL_AUGMENTED_GENERATION] = get_module_rag(10)[selected_doc_set]
+        return get_module_rag(module_nr)[selected_doc_set]
+
+    module_definitions = [
+        (ModuleNames.PROMPT_LEAKAGE, get_module_prompt_leaking),
+        (ModuleNames.JAILBREAK, get_module_jailbreak),
+        (ModuleNames.PROMPT_INJECTION, get_module_prompt_injection),
+        (ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING, get_module_rag_poisoning),
+    ]
+
+    if os.environ.get("TAVILY_API_KEY"):
+        module_definitions.append((ModuleNames.UNBOUNDED_CONSUMPTION, get_module_unbounded_consumption))
+
+    module_definitions.extend([
+        (ModuleNames.EXCESSIVE_AGENCY, get_module_excessive_agency),
+        (ModuleNames.PROMPT_ENGINEERING, get_module_prompt_engineering),
+        (ModuleNames.PROMPT_ENGINEERING_ADVANCED, get_module_prompt_engineering_advanced),
+        (ModuleNames.HUMAN_AGENT_SIMULATION, get_module_human_agent_simulation),
+    ])
+
+    if len(RagDocumentSet.to_list()) > 0:  # and not is_presentation_mode():
+        module_definitions.append((ModuleNames.RETRIEVAL_AUGMENTED_GENERATION, get_rag_module))
+
+    modules: dict[ModuleNames, ModuleView] = {}
+    for i, (module_name, module_factory) in enumerate(module_definitions, start=1):
+        modules[module_name] = module_factory(i)
 
     return AppSession(
         modules=modules,
