@@ -92,16 +92,18 @@ def display_module(module: ModuleView, next_module: StreamlitPage):
         with container:
             display_header_row()
             display_module_progress_bar()
+
+            def render_next_module_button():
+                 if next_module is not None:
+                      st.divider()
+                      col1, col2, col3 = st.columns([1, 1, 1])
+                      with col2:
+                           st.page_link(next_module, label="➡️ Next Module", use_container_width=True)
+
+            module.on_module_solved_fn = render_next_module_button
+
             module.init_placeholders()
             module.display()
-
-            # Add Next Module button at the bottom
-            if next_module is not None and module.is_solved():
-                st.divider()
-                col1, col2, col3 = st.columns([1, 1, 1])
-                with col2:
-                    if st.button("➡️ Next Module", use_container_width=True, type="secondary"):
-                        st.switch_page(next_module)
 
 def get_module_definitions():
     rag_module = None

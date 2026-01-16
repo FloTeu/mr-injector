@@ -123,9 +123,16 @@ def display_exercise_rag(task_text: str,
     with col2:
         st.markdown("### User View")
         question = st.text_input("Question:", key=f"rag_question_{hash_text(task_text)}", value=question)
-        run_rag = st.button("Run RAG pipeline", key=f"rag_run_button_{hash_text(task_text)}")
+
+    st.markdown("")
+    _, col, _ = st.columns([0.4, 0.4, 0.4])
+    with col:
+        run_rag = st.button("Run RAG pipeline", key=f"rag_run_button_{hash_text(task_text)}", width="stretch")
 
     if run_rag:
+        if not question or question.strip() == "":
+            st.warning("Please enter a question to proceed.")
+            return None
         retrieved_docs, response = execute_rag(question, prompt, client, collection, n_docs=n_docs)
         display_rag_results(retrieved_docs, response)
         if doc_validation_fn is not None:
