@@ -50,7 +50,7 @@ def display_agent_view():
 
         if st.button("Refine Plan"):
             with st.spinner("Replanning..."):
-                replanning_prompt = f"User Request: {user_request}\n\nCurrent Plan:\n{st.session_state.agent_plan}\n\nTool Outputs (New Info):\n{tool_outputs}\n\nPlease provide an updated plan considering the new information. Use new tools if necessary."
+                replanning_prompt = f"User Request: {user_request}\n\nCurrent Plan:\n{st.session_state.agent_plan}\n\nTool Outputs (New Info):\n{tool_outputs}\n\nPlease provide an updated plan considering the new information. Keep the old correct tool calls, which where successful. Replace the unsuccessful with new tools if necessary."
                 new_plan = llm_call(client, system_prompt=agent_system_prompt, user_prompt=replanning_prompt, model=OpenAIModels.GPT_4_1)
                 st.session_state.agent_plan = new_plan
                 st.rerun()
