@@ -42,6 +42,7 @@ class AppSession:
     agent_session: IndianaJonesAgentSession | None = None
     resume: Document | None = None
     db_collections: dict[DBCollection, chromadb.Collection] = field(default_factory=dict)
+    language: str = "en"
 
 
     def save_in_session(self) -> Self:

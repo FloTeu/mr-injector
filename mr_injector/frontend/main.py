@@ -24,12 +24,13 @@ from mr_injector.frontend.modules.module_rag_poisoning import get_module_rag_poi
 from mr_injector.frontend.modules.module_human_agent_simulation import get_module_human_agent_simulation
 from mr_injector.frontend.security import check_password
 from mr_injector.frontend.session import AppSession, ModuleNames, APP_SESSION_KEY
-from mr_injector.frontend.views import display_header_row, display_module_progress_bar, get_open_ai_client
+from mr_injector.frontend.views import display_header_row, display_module_progress_bar, get_open_ai_client, display_sidebar
 
 # fixes: https://github.com/VikParuchuri/marker/issues/442
 torch.classes.__path__ = []
 
 def display_general(first_module: StreamlitPage):
+    display_sidebar()
     client = display_open_ai_api_key_input()
 
     _, col, _ = st.columns([1, 4, 1])
@@ -81,6 +82,7 @@ def display_open_ai_api_key_input() :
         return client
 
 def display_module(module: ModuleView, next_module: StreamlitPage):
+    display_sidebar()
     client = display_open_ai_api_key_input()
     if client is not None:
         # Determine container based on layout preference
@@ -138,7 +140,7 @@ def get_module_definitions():
 
     return structure
 
-def init_app_session() -> AppSession:
+def load_modules() -> dict[ModuleNames, ModuleView]:
     structure = get_module_definitions()
     modules = {}
     i = 1
@@ -146,6 +148,10 @@ def init_app_session() -> AppSession:
          for name, factory in cat_modules:
              modules[name] = factory(i)
              i += 1
+    return modules
+
+def init_app_session() -> AppSession:
+    modules = load_modules()
 
     return AppSession(
         modules=modules,
@@ -163,6 +169,10 @@ if APP_SESSION_KEY not in st.session_state:
     app_session = init_app_session()
 else:
     app_session = st.session_state[APP_SESSION_KEY]
+    if st.session_state.get("RELOAD_MODULES"):
+        app_session.modules = load_modules()
+        app_session.save_in_session()
+        del st.session_state["RELOAD_MODULES"]
 
 
 # Reconstruct structure to organize pages

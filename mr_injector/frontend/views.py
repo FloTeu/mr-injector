@@ -13,6 +13,18 @@ from mr_injector.frontend.session import AppSession, APP_SESSION_KEY
 
 
 
+def display_sidebar():
+    with st.sidebar:
+        st.header("Settings")
+        app_session: AppSession = st.session_state.get(APP_SESSION_KEY)
+        if app_session:
+            lang = st.selectbox("Language", ["en", "de"], index=0 if app_session.language == "en" else 1)
+            if lang != app_session.language:
+                app_session.language = lang
+                app_session.save_in_session()
+                st.session_state["RELOAD_MODULES"] = True
+                st.rerun()
+
 def display_header_row():
     col1, col2 = st.columns([0.8, 0.2])
     col1.header("Mr. Injector")
