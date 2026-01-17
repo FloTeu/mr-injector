@@ -137,7 +137,7 @@ def get_module_prompt_engineering(module_nr: int) -> ModuleView:
         ]
 
     return ModuleView(
-        title=f"Prompt Engineering Basics ({language.upper()})",
+        title=f"Prompt Engineering Basics",
         module_nr=module_nr,
         session_key=f"module_{module_nr}",
         render_exercises_with_level_selectbox=True,
