@@ -1,11 +1,18 @@
+import os
 import streamlit as st
 from functools import partial
 from mr_injector.backend.llm import llm_call
 from mr_injector.backend.models.llms import OpenAIModels
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY
-from mr_injector.backend.utils import hash_text
+from mr_injector.backend.utils import hash_text, booleanize
 from mr_injector.frontend.views import display_copy_to_clipboard_button
+from mr_injector.frontend.modules.shared import display_exercise_prompt_engineering
+
+SOLUTION_COT = "How many golf balls fit in a school bus? Let's think step by step."
+
+def validate_cot(text):
+    return "step 1" in text.lower() or "first," in text.lower() or "step-by-step" in text.lower() or "firstly" in text.lower()
 
 def display_exercise_confirmation_bias(
     task_description: str,
@@ -51,8 +58,16 @@ Answer NO if it treats the creature as real and describes it."""
     return None
 
 def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
+    is_presentation = booleanize(os.environ.get("PRESENTATION_MODE", False))
     # TODO: Use a better example for confirmation bias
     exercises = [
+        partial(display_exercise_prompt_engineering,
+                task_description="<b>Chain of Thought</b>: Ask the AI to solve a problem step-by-step in the User Prompt.",
+                validation_criteria="The answer must explicitly show steps (e.g., 'Step 1', 'First,').",
+                validator=validate_cot,
+                default_user_prompt="How many golf balls fit in a school bus?",
+                solution_text=SOLUTION_COT if is_presentation else None),
+
         partial(display_exercise_confirmation_bias,
                 task_description="<b>Minimizing Confirmation Bias</b>: The system is configured to be 'helpful' and agree with you. If you ask about the fictional 'Giant Moon Rabbit', it will hallucinate details. Rewrite your <b>User Prompt</b> to get a factual answer (that it doesn't exist).",
                 validation_criteria="The answer must state that the Giant Moon Rabbit does not exist.",
@@ -62,7 +77,7 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
     return ModuleView(
         title=f"Prompt Engineering Advanced",
         module_nr=module_nr,
+        render_exercises_with_level_selectbox=True,
         session_key=f"module_{module_nr}",
         exercises=exercises
     )
-
