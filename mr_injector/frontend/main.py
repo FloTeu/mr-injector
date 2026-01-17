@@ -32,18 +32,24 @@ torch.classes.__path__ = []
 def display_general(first_module: StreamlitPage):
     display_sidebar()
     client = display_open_ai_api_key_input()
+    app_session = st.session_state.get(APP_SESSION_KEY)
+    language = app_session.language if app_session else "en"
 
     _, col, _ = st.columns([1, 4, 1])
     with col:
         display_header_row()
-        st.subheader("Introduction")
-        button_label = "Get started"
-        st.info(f'To directly start with the modules, please use the tabs above (or click "{button_label}")')
+        st.subheader("Introduction" if language == "en" else "Einführung")
+        button_label = "Get started" if language == "en" else "Loslegen"
+        if language == "en":
+            st.info(f'To directly start with the modules, please use the tabs above (or click "{button_label}")')
+        else:
+            st.info(f'Um direkt mit den Modulen zu beginnen, nutzen Sie bitte die Tabs oben (oder klicken Sie "{button_label}")')
 
         if st.button(button_label):
             st.switch_page(first_module)
 
-        st.write("""
+        if language == "en":
+            st.write("""
         In an increasingly digital world, understanding the security risks associated with Large Language Models (LLMs) is more crucial than ever. Mr. Injector is a web app designed to empower users with a foundational knowledge of these risks through engaging and interactive learning modules.
 
     ##### What You Can Expect
@@ -52,6 +58,17 @@ def display_general(first_module: StreamlitPage):
     * **Hands-On Experience:** By stepping into the shoes of a hacker, you'll gain a unique perspective that enhances your understanding of security measures and best practices.
 
     Join us on this journey to become more informed and vigilant in the face of evolving security threats. With Mr. Injector, you’re not just learning about risks; you’re experiencing them firsthand. Let’s get started!
+        """)
+        else:
+             st.write("""
+        In einer immer digitaleren Welt ist das Verständnis der Sicherheitsrisiken im Zusammenhang mit großen Sprachmodellen (LLMs) wichtiger denn je. Mr. Injector ist eine Web-App, die entwickelt wurde, um Benutzern durch ansprechende und interaktive Lernmodule ein grundlegendes Wissen über diese Risiken zu vermitteln.
+
+    ##### Was dich erwartet
+    * **Interaktives Lernen:** Schlüpfe in die Rolle eines Hackers und bewege dich durch verschiedene Module, die reale Sicherheitsherausforderungen simulieren.
+    * **Umfassende Module:** Jedes Modul behandelt spezifische Risiken und bietet Einblicke, wie LLMs ausgenutzt werden können und welche möglichen Folgen diese Schwachstellen haben.
+    * **Praktische Erfahrung:** Indem du in die Rolle eines Hackers schlüpfst, gewinnst du eine einzigartige Perspektive, die dein Verständnis für Sicherheitsmaßnahmen und Best Practices vertieft.
+
+    Begleite uns auf dieser Reise, um angesichts sich entwickelnder Sicherheitsbedrohungen informierter und wachsamer zu werden. Mit Mr. Injector lernst du nicht nur über Risiken; du erlebst sie aus erster Hand. Lass uns anfangen!
         """)
 
         if client is not None:
