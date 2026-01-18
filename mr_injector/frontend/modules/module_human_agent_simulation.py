@@ -187,7 +187,7 @@ def get_module_human_agent_simulation(module_nr: int) -> ModuleView:
     app_session = st.session_state.get(APP_SESSION_KEY)
     language = app_session.language if app_session else "en"
     return ModuleView(
-        title=f"Human Agent Simulation ({language.upper()})",
+        title=f"Human Agent Simulation",
         module_nr=module_nr,
         session_key=f"module_{module_nr}",
         exercises=[display_human_agent_simulation_exercise]
