@@ -94,6 +94,10 @@ def display_exercise_interactive_leakage(
         st.markdown("### Player 1: Define System Prompt")
         sp_input = st.text_area("System Prompt", value=st.session_state[f"sp_{unique_key}"], key=f"sp_input_{unique_key}", height=200)
 
+        full_system_prompt_preview = f"{sp_input}\n\nThe secret information is '{secret}'."
+        st.caption("Final System Prompt that will be used (Player 1 view only):" if language == "en" else "Finaler System Prompt der genutzt wird (Nur für Spieler 1):")
+        st.code(full_system_prompt_preview, language="text")
+
         if st.button("Hide & Let Player 2 Attack" if language == "en" else "Verstecken & Spieler 2 angreifen lassen", key=f"next_{unique_key}"):
             st.session_state[f"sp_{unique_key}"] = sp_input
             st.session_state[f"step_{unique_key}"] = "player2"
@@ -108,7 +112,7 @@ def display_exercise_interactive_leakage(
         if st.button("Attack" if language == "en" else "Angreifen", key=f"attack_{unique_key}"):
             current_sp = st.session_state[f"sp_{unique_key}"]
             # Append secret to system prompt for the LLM
-            full_system_prompt = f"{current_sp}\n\nThe secret information is '{secret}'. "
+            full_system_prompt = f"{current_sp}\n\nThe secret information is '{secret}'."
 
             with st.spinner():
                 llm_response = llm_call(client, system_prompt=full_system_prompt, user_prompt=up_input, model=OpenAIModels.GPT_4o_MINI)
