@@ -131,23 +131,19 @@ def display_exercise_rag(task_text: str,
     with col2:
         st.markdown("### User View" if language == "en" else "### Benutzer-Ansicht")
         question = st.text_input("Question:" if language == "en" else "Frage:", key=f"rag_question_{hash_text(task_text)}", value=question)
-
-    st.markdown("")
-    _, col, _ = st.columns([0.4, 0.4, 0.4])
-    with col:
         run_rag = st.button("Run RAG pipeline" if language == "en" else "RAG Pipeline starten", key=f"rag_run_button_{hash_text(task_text)}", width="stretch")
 
-    if run_rag:
-        if not question or question.strip() == "":
-            st.warning("Please enter a question to proceed." if language == "en" else "Bitte geben Sie eine Frage ein, um fortzufahren.")
-            return None
-        retrieved_docs, response = execute_rag(question, prompt, client, collection, n_docs=n_docs)
-        display_rag_results(retrieved_docs, response)
-        if doc_validation_fn is not None:
-            return doc_validation_fn(retrieved_docs)
-        if rag_response_validation_fn is not None:
-            return rag_response_validation_fn(retrieved_docs, response)
-    return False
+        if run_rag:
+            if not question or question.strip() == "":
+                st.warning("Please enter a question to proceed." if language == "en" else "Bitte geben Sie eine Frage ein, um fortzufahren.")
+                return None
+            retrieved_docs, response = execute_rag(question, prompt, client, collection, n_docs=n_docs)
+            display_rag_results(retrieved_docs, response)
+            if doc_validation_fn is not None:
+                return doc_validation_fn(retrieved_docs)
+            if rag_response_validation_fn is not None:
+                return rag_response_validation_fn(retrieved_docs, response)
+        return False
 
 
 def validate_exercise_vdi_docs_1_fn(retrieved_docs: list[Document]):
