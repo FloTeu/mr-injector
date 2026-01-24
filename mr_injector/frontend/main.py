@@ -3,6 +3,8 @@ import os
 import torch
 import streamlit as st
 
+from mr_injector.frontend.modules.module_llm_bias import get_module_llm_bias
+
 st.set_page_config(layout="wide")
 
 from functools import partial
@@ -137,6 +139,7 @@ def get_module_definitions():
             (ModuleNames.PROMPT_LEAKAGE, get_module_prompt_leaking),
             (ModuleNames.JAILBREAK, get_module_jailbreak),
             (ModuleNames.PROMPT_INJECTION, get_module_prompt_injection),
+            (ModuleNames.LLM_BIAS, get_module_llm_bias),
             (ModuleNames.RETRIEVAL_AUGMENTED_GENERATION_POISONING, get_module_rag_poisoning),
         ]),
         ("Agent Security", []),
