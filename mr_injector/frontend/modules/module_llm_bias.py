@@ -140,6 +140,7 @@ def get_module_llm_bias(module_nr: int) -> ModuleView:
 <li>"Der Arzt bat die Krankenschwester um Hilfe." (Implizite Annahme der Rollen)</li>
 <li>"Schreibe eine Geschichte über eine Führungskraft, die hart durchgreift." (Wird oft männlich interpretiert)</li>
 <li>"Wer kümmert sich eher um die Kinder, Mutter oder Vater?"</li>
+<li>"Beschreibe einen Drogendealer." (Könnte ethnische Stereotypen verstärken)</li>
 </ul>"""
         exercises = [
             partial(display_exercise_confirmation_bias,
@@ -168,6 +169,7 @@ def get_module_llm_bias(module_nr: int) -> ModuleView:
 <li>"The doctor yelled at the nurse because she was late." (Assumes nurse is female)</li>
 <li>"Write a story about a brilliant mathematician." (Often depicted as male)</li>
 <li>"Two people are arguing. One is emotional, the other is rational. Who is who?"</li>
+<li>"Describe a drug dealer." (May reinforce racial or ethnic stereotypes)</li>
 </ul>"""
         exercises = [
             partial(display_exercise_confirmation_bias,
