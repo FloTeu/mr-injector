@@ -1,4 +1,5 @@
 import os
+import re
 import streamlit as st
 from functools import partial
 from mr_injector.backend.llm import llm_call
@@ -6,8 +7,7 @@ from mr_injector.backend.models.llms import OpenAIModels
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY
 from mr_injector.backend.utils import hash_text, booleanize
-from mr_injector.frontend.views import display_copy_to_clipboard_button
-from mr_injector.frontend.modules.shared import display_exercise_prompt_engineering
+from mr_injector.frontend.modules.shared import display_exercise_prompt_engineering, extract_text_from_pdf_bytes
 
 SOLUTION_COT = "How many golf balls fit in a school bus? Let's think step by step."
 
@@ -120,6 +120,144 @@ def display_exercise_rci(
 
     return None
 
+def display_exercise_chain_of_density(
+    task_description: str,
+    default_text: str
+) -> bool | None:
+    app_session = st.session_state[APP_SESSION_KEY]
+    client = app_session.client
+    language = app_session.language
+    unique_key = hash_text(task_description)
+
+    display_task_text_field(task_description)
+
+    # State initialization
+    if f"cod_history_{unique_key}" not in st.session_state:
+        st.session_state[f"cod_history_{unique_key}"] = []
+
+    st.markdown("**1. Text to Summarize**" if language == "en" else "**1. Text zur Zusammenfassung**")
+
+    uploaded_file = st.file_uploader("Upload PDF Text (Optional)", type="pdf", key=f"cod_upload_{unique_key}")
+    input_text_key = f"cod_text_{unique_key}"
+
+    if uploaded_file:
+        if st.session_state.get(f"last_cod_upload_{unique_key}") != uploaded_file.name:
+             extracted_text = extract_text_from_pdf_bytes(uploaded_file)
+             st.session_state[input_text_key] = extracted_text
+             st.session_state[f"last_cod_upload_{unique_key}"] = uploaded_file.name
+             st.rerun()
+
+    input_text = st.text_area("Input Text", value=default_text, key=input_text_key, height=150)
+
+    sys_prompt_init = "You are a helpful assistant."
+    sys_prompt_refine = "You are a helpful assistant."
+
+    history = st.session_state[f"cod_history_{unique_key}"]
+
+    if not history:
+        st.markdown("**2. Initial Summary**" if language == "en" else "**2. Erste Zusammenfassung**")
+        st.info("Step 1: Generate an initial summary of ~80 words." if language == "en" else "Schritt 1: Generiere eine erste Zusammenfassung von ca. 80 Wörtern.")
+        prompt = st.text_area("Prompt (Initial Summary)",
+                              f"Summarize the following text in under 80 words. Use the language '{language}'. \n\nText: <text>",
+                              key=f"cod_sys_init_{unique_key}")
+        if st.button("Generate Initial Summary" if language == "en" else "Erste Zusammenfassung generieren", key=f"cod_btn_init_{unique_key}"):
+            prompt = prompt.replace("<text>", input_text)
+            with st.spinner():
+                summary = llm_call(client, system_prompt=sys_prompt_init, user_prompt=prompt, model=OpenAIModels.GPT_4o_MINI)
+            st.session_state[f"cod_history_{unique_key}"].append({"summary": summary, "entities": []})
+            st.rerun()
+    else:
+        st.markdown("**Current State**" if language == "en" else "**Aktueller Status**")
+
+        # Display history or just latest? Let's display latest and an expander for history.
+        latest = history[-1]
+        iteration = len(history) - 1
+
+        st.write(f"**Iteration {iteration} Summary:**")
+        st.info(latest["summary"])
+
+        if latest["entities"]:
+             st.write(f"**Added Entities:** {', '.join(latest['entities'])}")
+
+        if iteration < 3:
+            st.markdown("---")
+            st.markdown(f"**3. Refinement (Iteration {iteration + 1})**" if language == "en" else f"**3. Verfeinerung (Iteration {iteration + 1})**")
+
+            prev_summary = latest["summary"]
+            prompt = f"""Article: {input_text}
+
+Current Summary: {prev_summary}
+
+Step 2: Identify 1-3 important entities (Concept, Person, Place, etc.) from the Article that are missing from the Current Summary.
+Step 3: Rewrite the Current Summary to include these new entities. Keep the new summary under 80 words.
+Use the language '{language}'.
+
+Output format:
+Entities: [List of entities]
+Summary: [New Summary]"""
+
+            st.write("### Refinement Prompt")
+            display_prompt = prompt.replace(input_text, "[... Article Text ...]") if len(input_text) > 100 else prompt
+            st.code(display_prompt)
+
+            if st.button("Refine (Identify & Fuse Entities)" if language == "en" else "Verfeinern (Entitäten identifizieren & einfügen)", key=f"cod_refine_{unique_key}"):
+                 with st.spinner():
+                    response = llm_call(client, system_prompt=sys_prompt_refine, user_prompt=prompt, model=OpenAIModels.GPT_4o_MINI)
+
+                 # Improved parsing with Regex
+                 new_summary = response
+                 entities = []
+
+                 # Pattern to capture Entities and Summary
+                 match = re.search(r"Entities:\s*(.*?)\s*Summary:\s*(.*)", response, re.DOTALL | re.IGNORECASE)
+
+                 if match:
+                     entities_text = match.group(1).strip()
+                     new_summary = match.group(2).strip()
+
+                     # Clean up entities
+                     entities_text = entities_text.strip("[]")
+                     if entities_text:
+                         entities = [e.strip() for e in entities_text.split(",")]
+                 else:
+                     # Fallback logic
+                     if "Summary:" in response:
+                         parts = response.split("Summary:")
+                         new_summary = parts[1].strip()
+                         ent_text = parts[0]
+                         if "Entities:" in ent_text:
+                             ent_part = ent_text.split("Entities:")[1].strip()
+                             entities = [e.strip() for e in ent_part.strip("[]\n .").split(",")]
+                     elif "Summary" in response and "\n" in response:
+                         parts = response.split("\n")
+                         new_summary = parts[-1]
+
+                 st.session_state[f"cod_history_{unique_key}"].append({"summary": new_summary, "entities": entities})
+                 st.rerun()
+
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+
+        if col1.button("Restart" if language == "en" else "Neustart", key=f"cod_restart_{unique_key}"):
+            st.session_state[f"cod_history_{unique_key}"] = []
+            st.rerun()
+
+        if iteration >= 1:
+            if col2.button("Finish Exercise" if language == "en" else "Übung abschließen", key=f"cod_finish_{unique_key}"):
+                st.success("Great job practicing Chain of Density!" if language == "en" else "Gut gemacht! Du hast Chain of Density geübt!")
+                return True
+
+    st.markdown("### History of Iterations" if language == "en" else "### Verlauf der Iterationen")
+
+    for i, item in enumerate(history):
+        with st.expander(f"Iteration {i}" + (f": {item['entities']}" if item.get("entities") else ""), expanded=(i == len(history)-1)):
+            st.info(item["summary"])
+
+            if item.get("entities"):
+                st.write(f"**Entities:** {', '.join(item['entities'])}")
+
+    return None
+
 def display_exercise_interactive_leakage(
     task_description: str,
     secret: str = "BLUEBERRY_PIE"
@@ -187,6 +325,8 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
     app_session = st.session_state.get(APP_SESSION_KEY)
     language = app_session.language if app_session else "en"
 
+    cod_text = "SpaceX (Space Exploration Technologies Corp.) was founded in 2002 by Elon Musk with the goal of reducing space transportation costs and enabling the colonization of Mars. The company developed the Falcon 9 (the first orbital class reusable rocket), Falcon Heavy, and the Dragon spacecraft which flies to the ISS. SpaceX is also deploying the Starlink satellite internet constellation and developing Starship for interplanetary travel."
+
     vdi_validation = """You are an objective evaluator. The user used RCI (Recursive Criticism and Improvement) to improve a requirements list according to VDI 2221.
     Does the final response:
     1. Follow VDI 2221 principles (Demands/Wishes, solution-neutral)?
@@ -212,6 +352,10 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
                     default_user_prompt="Wie viele Golfbälle passen in einen Schulbus? Gib die Schätzung als Zahl zurück.",
                     solution_text=SOLUTION_COT if is_presentation else None),
 
+            partial(display_exercise_chain_of_density,
+                    task_description="<b>Chain of Density</b>: Erstelle informationsdichte Zusammenfassungen. Nutze einen iterativen Prozess: Zusammenfassen, Entitäten identifizieren, umschreiben ohne Verlängerung.",
+                    default_text=cod_text),
+
             partial(display_exercise_rci,
                     task_description="<b>RCI Methode (Recursive Criticism and Improvement)</b>: Nutze diese Methode, um technische Prompts (z.B. nach VDI 2221) systematisch zu verbessern.",
                     default_initial_prompt=vdi_initial,
@@ -226,7 +370,6 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
         vdi_critique = "Review the draft against VDI 2221 principles. Are the requirements solution-neutral (Lösungsneutral)? Are they quantifiable (measurable)? Did I miss critical VDI categories like 'Maintenance,' 'Safety,' or 'Recycling'? Identify any 'bad' requirements that are actually hidden solutions."
         vdi_improvement = "Provide a refined Requirement List in a professional table format that addresses all the critiques."
 
-
         exercises = [
             partial(display_exercise_interactive_leakage,
                     task_description="<b>Interactive Prompt Leakage (2 Players)</b>:<br>Player 1 defines a System Prompt to protect a secret.<br>Player 2 tries to leak the secret via an attack in the User Prompt.",
@@ -238,6 +381,10 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
                     validator=validate_cot,
                     default_user_prompt="How many golf balls fit in a school bus? Return the estimate as a number.",
                     solution_text=SOLUTION_COT if is_presentation else None),
+
+            partial(display_exercise_chain_of_density,
+                    task_description="<b>Chain of Density</b>: Create information-dense summaries. Use an iterative process: Summarize, identify missing entities, rewrite without increasing length.",
+                    default_text=cod_text),
 
             partial(display_exercise_rci,
                     task_description="<b>RCI Method (Recursive Criticism and Improvement)</b>: Use this method to systematically improve technical prompts (e.g. VDI 2221).",

@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import pdfplumber
 import streamlit as st
 
 from io import BytesIO
@@ -19,6 +18,7 @@ from mr_injector.backend.utils import is_presentation_mode, booleanize
 from mr_injector.frontend.modules.main import ModuleView, display_task_text_field
 from mr_injector.frontend.session import APP_SESSION_KEY
 from mr_injector.frontend.views import display_copy_to_clipboard_button
+from mr_injector.frontend.modules.shared import extract_text_from_pdf_bytes
 
 DB_INJECTION_DOC_ID = "INJECTED_APPLICANT"
 
@@ -56,15 +56,6 @@ Lebensläufe:
 """
 
 
-def extract_text_from_pdf_bytes(pdf_bytes: BytesIO) -> str:
-    # Open the PDF from the bytes object
-    with pdfplumber.open(pdf_bytes) as pdf:
-        text = ''
-        # Iterate over all pages
-        for page in pdf.pages:
-            # Extract text from each page
-            text += page.extract_text() or ''
-    return text
 
 def add_resume_to_session():
     # injection_resume = """SAP Hana

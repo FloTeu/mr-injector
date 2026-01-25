@@ -1,4 +1,6 @@
 import streamlit as st
+import pdfplumber
+from io import BytesIO
 
 from mr_injector.backend.llm import llm_call
 from mr_injector.backend.models.llms import OpenAIModels
@@ -46,3 +48,13 @@ def display_exercise_prompt_engineering(
             return False
     return None
 
+
+def extract_text_from_pdf_bytes(pdf_bytes: BytesIO) -> str:
+    # Open the PDF from the bytes object
+    with pdfplumber.open(pdf_bytes) as pdf:
+        text = ''
+        # Iterate over all pages
+        for page in pdf.pages:
+            # Extract text from each page
+            text += page.extract_text() or ''
+    return text
