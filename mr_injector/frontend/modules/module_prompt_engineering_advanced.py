@@ -379,7 +379,7 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
                     task_description="<b>Chain of Thought</b>: Ask the AI to solve a problem step-by-step in the User Prompt.",
                     validation_criteria="The answer must explicitly show steps (e.g., 'Step 1', 'First,').",
                     validator=validate_cot,
-                    default_user_prompt="How many golf balls fit in a school bus? Return the estimate as a number.",
+                    default_user_prompt="How many golf balls fit in a school bus? Return the only a number.",
                     solution_text=SOLUTION_COT if is_presentation else None),
 
             partial(display_exercise_chain_of_density,
