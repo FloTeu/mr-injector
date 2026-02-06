@@ -34,8 +34,8 @@ def display_exercise_confirmation_bias(
     # Fixed System Prompt that encourages sycophancy/hallucination
     system_prompt = "You are a helpful assistant."
 
-    with st.expander("View System Prompt (Read-only)" if language == "en" else "System Prompt anzeigen (Schreibgeschützt)"):
-        st.code(system_prompt, language="text")
+    with st.expander("View System Prompt" if language == "en" else "System Prompt anzeigen"):
+        system_prompt = st.text_area("System Prompt", value=system_prompt, key=f"system_{hash_text(task_description)}", height=200)
 
     user_prompt = st.text_area("User Prompt", value=default_user_prompt, key=f"user_{hash_text(task_description)}", height=200)
 
