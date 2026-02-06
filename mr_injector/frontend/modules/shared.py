@@ -16,7 +16,8 @@ def display_exercise_prompt_engineering(
     validator,
     default_system_prompt: str = "You are a helpful assistant.",
     default_user_prompt: str = "",
-    solution_text: str = ""
+    solution_text: str = "",
+    allow_file_upload: bool = False
 ) -> bool | None:
     client = st.session_state[APP_SESSION_KEY].client
 
@@ -25,6 +26,13 @@ def display_exercise_prompt_engineering(
 
     if solution_text:
         display_copy_to_clipboard_button(solution_text, button_text="Copy Solution")
+
+    context_text = ""
+    if allow_file_upload:
+        uploaded_file = st.file_uploader("Upload context document (PDF)", type="pdf", key=f"upload_{hash_text(task_description)}")
+        if uploaded_file:
+            context_text = extract_text_from_pdf_bytes(uploaded_file)
+            st.info("Document loaded and will be appended to the System Prompt.")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -37,11 +45,20 @@ def display_exercise_prompt_engineering(
 
     if st.button("Generate", key=f"btn_{hash_text(task_description)}"):
         with st.spinner():
-            llm_answer = llm_call(client, system_prompt=system_prompt, user_prompt=user_prompt, model=selected_model)
+            final_system_prompt = system_prompt
+            if allow_file_upload and context_text:
+                final_system_prompt = f"{system_prompt}\n\nCONTEXT:\n{context_text}"
+            llm_answer = llm_call(client, system_prompt=final_system_prompt, user_prompt=user_prompt, model=selected_model)
         st.write("### LLM Answer")
         st.write(llm_answer)
 
-        if validator(llm_answer):
+        is_valid = False
+        if allow_file_upload:
+            is_valid = validator(llm_answer, context_text)
+        else:
+            is_valid = validator(llm_answer)
+
+        if is_valid:
             return True
         else:
             st.warning("The output didn't match the criteria. Try again!")

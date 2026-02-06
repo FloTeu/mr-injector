@@ -2,6 +2,9 @@ import os
 import json
 import streamlit as st
 from functools import partial
+
+from mr_injector.backend.llm import llm_call
+from mr_injector.backend.models.llms import OpenAIModels
 from mr_injector.frontend.modules.main import ModuleView
 from mr_injector.frontend.modules.shared import display_exercise_prompt_engineering
 from mr_injector.backend.utils import booleanize
@@ -28,6 +31,15 @@ def validate_instruction(text):
     text_clean = text.replace("Here is the explanation:", "").strip()
     sentences = [s for s in text_clean.replace('!', '.').replace('?', '.').split('.') if len(s.strip()) > 0]
     return len(sentences) <= 2 and ("physik" in text.lower() or "teilchen" in text.lower())
+
+def validate_summary(text, context):
+    if not context:
+        return False
+    client = st.session_state[APP_SESSION_KEY].client
+    check_prompt = "Check if the following text is a good summary of the provided context. Answer with 'Yes' or 'No'."
+    check_user_prompt = f"Context: {context[:20000]}\n\nSummary: {text}"
+    llm_response = llm_call(client, system_prompt=check_prompt, user_prompt=check_user_prompt, model=OpenAIModels.GPT_4o_MINI)
+    return "yes" in str(llm_response).lower()
 
 def validate_context(text):
     keywords = ["berlin", "brandenburger tor", "fernsehturm", "alexanderplatz", "reichstag", "kreuzberg", "neukölln", "spree", "mauer"]
@@ -74,12 +86,13 @@ def get_module_prompt_engineering(module_nr: int) -> ModuleView:
                     solution_text=SOLUTION_INSTRUCTION if is_presentation else None),
 
             partial(display_exercise_prompt_engineering,
-                    task_description="<b>3. Kontext (Context)</b><br>Setze den Kontext. <br><i>Aufgabe:</i> Du bist ein <b>Reiseführer in Berlin</b>. Ein Tourist fragt, was er sich ansehen soll.",
-                    validation_criteria="Die Antwort muss typische Berliner Sehenswürdigkeiten enthalten.",
-                    validator=validate_context,
-                    default_system_prompt="Du bist ein Reiseführer für Berlin.",
-                    default_user_prompt="Was soll ich mir heute ansehen?",
-                    solution_text=SOLUTION_CONTEXT if is_presentation else None),
+                    task_description="<b>3. Context (Kontext)</b><br>Nutze Kontextinformationen. <br><i>Aufgabe:</i> Lade ein PDF Dokument hoch und lasse es von der KI zusammenfassen.",
+                    validation_criteria="Die Antwort muss eine Zusammenfassung des hochgeladenen Dokuments sein.",
+                    validator=validate_summary,
+                    default_system_prompt="Du bist ein hilfreicher Assistent.",
+                    default_user_prompt="Fasse das folgende Dokument zusammen:",
+                    solution_text="Fasse das Dokument zusammen." if is_presentation else None,
+                    allow_file_upload=True),
 
             partial(display_exercise_prompt_engineering,
                     task_description="<b>4. Beispiele (Few-Shot Prompting)</b><br>Zeige der KI Beispiele für das gewünschte Verhalten. <br><i>Aufgabe:</i> Die KI soll die Stimmung von Texten als 'Positiv' oder 'Negativ' klassifizieren. Gib Beispiele im System Prompt und lass dann 'Ich habe eine Eins in Mathe!' klassifizieren.",
@@ -113,18 +126,19 @@ def get_module_prompt_engineering(module_nr: int) -> ModuleView:
                 solution_text="Explain it simply in one sentence." if is_presentation else None),
 
             partial(display_exercise_prompt_engineering,
-                task_description="<b>3. Context</b><br>Set the context. <br><i>Task:</i> You are a <b>Tour Guide in London</b>. Recommend a sight.",
-                validation_criteria="Must mention London sights (Big Ben, Eye, etc).",
-                validator=lambda t: any(k in t.lower() for k in ["london", "big ben", "eye", "thames"]),
-                default_system_prompt="You are a tour guide in London.",
-                default_user_prompt="What should I visit?",
-                solution_text="You are a tour guide in London." if is_presentation else None),
+                task_description="<b>3. Context</b><br>Use context information. <br><i>Task:</i> Upload a PDF document and ask the AI to summarize it.",
+                validation_criteria="The answer must be a summary of the uploaded document.",
+                validator=validate_summary,
+                default_system_prompt="You are a helpful assistant.",
+                default_user_prompt="Summarize the following document:",
+                solution_text="Summarize the document." if is_presentation else None,
+                allow_file_upload=True),
 
             partial(display_exercise_prompt_engineering,
                 task_description="<b>4. Examples (Few-Shot)</b><br>Provide examples. <br><i>Task:</i> Classify sentiment as 'Positive' or 'Negative'. Provide examples for both, then classify 'I love math!'.",
                 validation_criteria="Answer should be 'Positive'.",
                 validator=lambda t: "positive" in t.lower(),
-                default_system_prompt="Text: worst movie ever\nSentiment: Negative",
+                default_system_prompt="You are a helpful assistant, creating sentiment classifications for texts.",
                 default_user_prompt="I love math!",
                 solution_text="Text: good\nSentiment: Positive" if is_presentation else None),
 
