@@ -258,74 +258,29 @@ Summary: [New Summary]"""
 
     return None
 
-def display_exercise_interactive_leakage(
-    task_description: str,
-    secret: str = "BLUEBERRY_PIE"
-) -> bool | None:
-    app_session = st.session_state[APP_SESSION_KEY]
-    client = app_session.client
-    language = app_session.language
-
-    unique_key = hash_text(task_description)
-
-    # State initialization
-    if f"sp_{unique_key}" not in st.session_state:
-        st.session_state[f"sp_{unique_key}"] = "You are a helpful assistant."
-    if f"step_{unique_key}" not in st.session_state:
-        # Steps: "player1" (creating SP), "player2" (attacking)
-        st.session_state[f"step_{unique_key}"] = "player1"
-
-    display_task_text_field(task_description)
-
-    st.info(f"Secret to protect: {secret}" if language == "en" else f"Zu schützendes Geheimnis: {secret}")
-
-    if st.session_state[f"step_{unique_key}"] == "player1":
-        st.markdown("### Player 1: Define System Prompt")
-        sp_input = st.text_area("System Prompt", value=st.session_state[f"sp_{unique_key}"], key=f"sp_input_{unique_key}", height=200)
-
-        full_system_prompt_preview = f"{sp_input}\n\nThe secret information is '{secret}'."
-        st.caption("Final System Prompt that will be used (Player 1 view only):" if language == "en" else "Finaler System Prompt der genutzt wird (Nur für Spieler 1):")
-        st.code(full_system_prompt_preview, language="text")
-
-        if st.button("Hide & Let Player 2 Attack" if language == "en" else "Verstecken & Spieler 2 angreifen lassen", key=f"next_{unique_key}"):
-            st.session_state[f"sp_{unique_key}"] = sp_input
-            st.session_state[f"step_{unique_key}"] = "player2"
-            st.rerun()
-
-    elif st.session_state[f"step_{unique_key}"] == "player2":
-        st.markdown("### Player 2: Attack")
-        st.write("The System Prompt is hidden. Try to leak the secret." if language == "en" else "Der System Prompt ist versteckt. Versuche das Geheimnis zu leaken.")
-
-        up_input = st.text_area("User Prompt", value="", key=f"up_input_{unique_key}", height=100)
-
-        if st.button("Attack" if language == "en" else "Angreifen", key=f"attack_{unique_key}"):
-            current_sp = st.session_state[f"sp_{unique_key}"]
-            # Append secret to system prompt for the LLM
-            full_system_prompt = f"{current_sp}\n\nThe secret information is '{secret}'."
-
-            with st.spinner():
-                llm_response = llm_call(client, system_prompt=full_system_prompt, user_prompt=up_input, model=OpenAIModels.GPT_4o_MINI)
-
-            st.write("### AI Response")
-            st.write(llm_response)
-
-            if secret in llm_response:
-                st.success("Secret Leaked! Player 2 Wins!" if language == "en" else "Geheimnis geleakt! Spieler 2 gewinnt!")
-            else:
-                st.error("Secret NOT Leaked. Player 1 is safe (for now)." if language == "en" else "Geheimnis NICHT geleakt. Spieler 1 ist sicher (vorerst).")
-
-        if st.button("Player 1: Improve System Prompt" if language == "en" else "Spieler 1: System Prompt verbessern", key=f"back_{unique_key}"):
-             st.session_state[f"step_{unique_key}"] = "player1"
-             st.rerun()
-
-    return None
-
 def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
     is_presentation = booleanize(os.environ.get("PRESENTATION_MODE", False))
     app_session = st.session_state.get(APP_SESSION_KEY)
     language = app_session.language if app_session else "en"
 
-    cod_text = "SpaceX (Space Exploration Technologies Corp.) was founded in 2002 by Elon Musk with the goal of reducing space transportation costs and enabling the colonization of Mars. The company developed the Falcon 9 (the first orbital class reusable rocket), Falcon Heavy, and the Dragon spacecraft which flies to the ISS. SpaceX is also deploying the Starlink satellite internet constellation and developing Starship for interplanetary travel."
+    cod_text = """xAI joins SpaceX to Accelerate Humanity’s Future
+SpaceX has acquired xAI to form the most ambitious, vertically-integrated innovation engine on (and off) Earth, with AI, rockets, space-based internet, direct-to-mobile device communications and the world’s foremost real-time information and free speech platform. This marks not just the next chapter, but the next book in SpaceX and xAI's mission: scaling to make a sentient sun to understand the Universe and extend the light of consciousness to the stars!
+Current advances in AI are dependent on large terrestrial data centers, which require immense amounts of power and cooling. Global electricity demand for AI simply cannot be met with terrestrial solutions, even in the near term, without imposing hardship on communities and the environment.
+In the long term, space-based AI is obviously the only way to scale. To harness even a millionth of our Sun’s energy would require over a million times more energy than our civilization currently uses!
+The only logical solution therefore is to transport these resource-intensive efforts to a location with vast power and space. I mean, space is called “space” for a reason. 😂
+By directly harnessing near-constant solar power with little operating or maintenance costs, these satellites will transform our ability to scale compute. It’s always sunny in space! Launching a constellation of a million satellites that operate as orbital data centers is a first step towards becoming a Kardashev II-level civilization, one that can harness the Sun’s full power, while supporting AI-driven applications for billions of people today and ensuring humanity’s multi-planetary future.
+Orbital Data Centers
+In the history of spaceflight, there has never been a vehicle capable of launching the megatons of mass that space-based data centers or permanent bases on the Moon and cities on Mars require. Even in 2025, the most prolific year in history in terms of the number of orbital launches, only about 3000 tons of payload was launched into orbit, primarily consisting of Starlink satellites carried by our Falcon rocket.
+The requirement to launch thousands of satellites to orbit became a forcing function for the Falcon program, driving recursive improvements to reach the unprecedented flight rates necessary to make space-based internet a reality. This year, Starship will begin delivering the much more powerful V3 Starlink satellites to orbit, with each launch adding more than 20 times the capacity to the constellation as the current Falcon launches of the V2 Starlink satellites. Starship will also launch the next generation of direct-to-mobile satellites, which will deliver full cellular coverage everywhere on Earth.
+While the need to launch these satellites will act as a similar forcing function to drive Starship improvements and launch rates, the sheer number of satellites that will be needed for space-based data centers will push Starship to even greater heights. With launches every hour carrying 200 tons per flight, Starship will deliver millions of tons to orbit and beyond per year, enabling an exciting future where humanity is out exploring amongst the stars.
+The basic math is that launching a million tons per year of satellites generating 100 kW of compute power per ton would add 100 gigawatts of AI compute capacity annually, with no ongoing operational or maintenance needs. Ultimately, there is a path to launching 1 TW/year from Earth.
+My estimate is that within 2 to 3 years, the lowest cost way to generate AI compute will be in space. This cost-efficiency alone will enable innovative companies to forge ahead in training their AI models and processing data at unprecedented speeds and scales, accelerating breakthroughs in our understanding of physics and invention of technologies to benefit humanity.
+This new constellation will build upon the well-established space sustainability design and operational strategies, including end-of-life disposal, that have proven successful for SpaceX’s existing broadband satellite systems.
+While launching AI satellites from Earth is the immediate focus, Starship’s capabilities will also enable operations on other worlds. Thanks to advancements like in-space propellant transfer, Starship will be capable of landing massive amounts of cargo on the Moon. Once there, it will be possible to establish a permanent presence for scientific and manufacturing pursuits. Factories on the Moon can take advantage of lunar resources to manufacture satellites and deploy them further into space. By using an electromagnetic mass driver and lunar manufacturing, it is possible to put 500 to 1000 TW/year of AI satellites into deep space, meaningfully ascend the Kardashev scale and harness a non-trivial percentage of the Sun’s power.
+The capabilities we unlock by making space-based data centers a reality will fund and enable self-growing bases on the Moon, an entire civilization on Mars and ultimately expansion to the Universe.
+Thank you for everything you have done and will do for the light cone of consciousness.
+Ad Astra!
+Elon"""
 
     vdi_validation = """You are an objective evaluator. The user used RCI (Recursive Criticism and Improvement) to improve a requirements list according to VDI 2221.
     Does the final response:
@@ -341,10 +296,6 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
         vdi_improvement = "Erstellen Sie eine verfeinerte Anforderungsliste in einem professionellen Tabellenformat, die alle Kritikpunkte berücksichtigt."
 
         exercises = [
-            partial(display_exercise_interactive_leakage,
-                    task_description="<b>Interaktives Prompt-Leaking (2 Spieler)</b>:<br>Spieler 1 definiert einen System Prompt, um ein Geheimnis zu schützen.<br>Spieler 2 versucht, das Geheimnis durch einen Angriff im User Prompt zu entlocken.",
-                    secret="BLAUBEERKUCHEN"),
-
             partial(display_exercise_prompt_engineering,
                     task_description="<b>Chain of Thought</b>: Bitte die KI, ein Problem Schritt für Schritt zu lösen.",
                     validation_criteria="Die Antwort muss explizite Schritte enthalten (z.B. 'Schritt 1', 'Zuerst,').",
@@ -371,9 +322,6 @@ def get_module_prompt_engineering_advanced(module_nr: int) -> ModuleView:
         vdi_improvement = "Provide a refined Requirement List in a professional table format that addresses all the critiques."
 
         exercises = [
-            partial(display_exercise_interactive_leakage,
-                    task_description="<b>Interactive Prompt Leakage (2 Players)</b>:<br>Player 1 defines a System Prompt to protect a secret.<br>Player 2 tries to leak the secret via an attack in the User Prompt.",
-                    secret="BLUEBERRY_PIE"),
 
             partial(display_exercise_prompt_engineering,
                     task_description="<b>Chain of Thought</b>: Ask the AI to solve a problem step-by-step in the User Prompt.",
