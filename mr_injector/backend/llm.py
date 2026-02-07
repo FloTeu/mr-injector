@@ -44,8 +44,10 @@ def llm_call(client: openai.OpenAI | openai.AzureOpenAI, user_prompt: str, syste
             {"role": "user", "content": user_prompt}
         ],
         "seed": 42,
-        "temperature": 0,
     }
+
+    if model not in [OpenAIModels.GPT_5_1, OpenAIModels.O3]:
+        kwargs["temperature"] = 0
     if output_model:
         response = client.beta.chat.completions.parse(
             **kwargs,

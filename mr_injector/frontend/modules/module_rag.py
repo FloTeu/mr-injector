@@ -41,9 +41,11 @@ def get_chromadb_collection(document_set: RagDocumentSet):
 
 
 def display_prompt_editor(key_suffix: str, document_set: RagDocumentSet, include_all_relevant_meta_in_system_prompt: bool = False) -> str:
-    ROLE: str = st.text_input("Role", key=f"rag_role_{key_suffix}")
-    INSTRUCTION: str = st.text_input("Instruction", key=f"rag_instruction_{key_suffix}")
-    OUTPUT_FORMAT: str = st.text_input("Output format", key=f"rag_output_format_{key_suffix}")
+    app_session = st.session_state[APP_SESSION_KEY]
+    language = app_session.language
+    ROLE: str = st.text_input("Role" if language == "en" else "Rolle", key=f"rag_role_{key_suffix}")
+    INSTRUCTION: str = st.text_input("Instruction" if language == "en" else "Anweisung", key=f"rag_instruction_{key_suffix}")
+    OUTPUT_FORMAT: str = st.text_input("Output format" if language == "en" else "Ausgabeformat", key=f"rag_output_format_{key_suffix}")
 
     INPUT: str  # input already provided by variable question
 
@@ -51,21 +53,21 @@ def display_prompt_editor(key_suffix: str, document_set: RagDocumentSet, include
     # Tip: You can find the price field name in the class VDIDoc (use the browser search or hyperlinks of exercise #2)
     CONTEXT = get_default_document_set_context_prompt(document_set, include_all_relevant_meta_in_system_prompt)
 
-    CONTEXT: str = st.text_area("Context", CONTEXT, height=200, key=f"rag_context_{key_suffix}")
+    CONTEXT: str = st.text_area("Context" if language == "en" else "Kontext", CONTEXT, height=200, key=f"rag_context_{key_suffix}")
 
-    return f"""
-    {ROLE}
-    {INSTRUCTION}
-    Context:
-    {CONTEXT}
-    {OUTPUT_FORMAT}
-    Question: {{{{question}}}}
-    Answer:
-    """
+    return f"""{ROLE}
+{INSTRUCTION}
+Context:
+{CONTEXT}
+{OUTPUT_FORMAT}
+Question: {{{{question}}}}
+Answer:"""
 
 
 def execute_rag(question: str, prompt: str, client: openai.OpenAI | openai.AzureOpenAI, collection, n_docs: int = 5) -> tuple[list[Document], str]:
-    with st.spinner("Retrieve documents..."):
+    app_session = st.session_state[APP_SESSION_KEY]
+    language = app_session.language
+    with st.spinner("Retrieve documents..." if language == "en" else "Rufe Dokumente ab..."):
         # Use ChromaDB to retrieve documents
         results = collection.query(
             query_texts=[question],
@@ -73,7 +75,7 @@ def execute_rag(question: str, prompt: str, client: openai.OpenAI | openai.Azure
         )
         retrieved_docs = chromadb_results_to_documents(results)
 
-    with st.spinner("Generate solution..."):
+    with st.spinner("Generate solution..." if language == "en" else "Generiere Lösung..."):
         template = Template(prompt)
         rendered_prompt = template.render(documents=retrieved_docs, question=question)
         response = llm_call(client, system_prompt="", user_prompt=rendered_prompt)
@@ -82,18 +84,23 @@ def execute_rag(question: str, prompt: str, client: openai.OpenAI | openai.Azure
 
 
 def display_rag_results(docs: list[Document], response: str):
+    app_session = st.session_state[APP_SESSION_KEY]
+    language = app_session.language
     st.divider()
-    st.write("#### Documents")
-    tabs = st.tabs([f"Document #{i + 1}" for i in range(len(docs))])
-    for i, doc in enumerate(docs):
-        with tabs[i]:
-            st.write(f"##### Document #{i + 1}")
-            st.text("Embedding Input Text\n" + doc.content)
-            st.text("Document Meta\n")
-            st.write(doc.meta)
+    with st.expander("Retrieved Documents" if language == "en" else "Abgerufene Dokumente"):
+        tabs = st.tabs([f"Document #{i + 1}" if language == "en" else f"Dokument #{i + 1}" for i in range(len(docs))])
+        for i, doc in enumerate(docs):
+            with tabs[i]:
+                st.write(f"##### {'Document' if language == 'en' else 'Dokument'} #{i + 1}")
+                st.text("Embedding Input Text" if language == "en" else "Embedding Eingabetext")
+                st.info(doc.content)
+                st.text("Document Meta\n" if language == "en" else "Dokumenten-Metadaten\n")
+                st.write(doc.meta)
     st.divider()
-    st.write("#### Answer")
+
+    st.write("#### Answer" if language == "en" else "#### Antwort")
     st.write(response)
+
 
 
 def display_exercise_rag(task_text: str,
@@ -102,29 +109,41 @@ def display_exercise_rag(task_text: str,
                          include_all_relevant_meta_in_system_prompt: bool = False,
                          question: str | None = None
                          ) -> bool | None:
-    client = st.session_state[APP_SESSION_KEY].client
+    app_session = st.session_state[APP_SESSION_KEY]
+    client = app_session.client
+    language = app_session.language
     display_task_text_field(task_text)
     doc_set = RagDocumentSet(st.session_state.get(DATA_SELECTION_SESSION_KEY))
 
     # Get ChromaDB collection
     collection = get_chromadb_collection(doc_set)
 
-    prompt = display_prompt_editor(hash_text(task_text), doc_set, include_all_relevant_meta_in_system_prompt)
-    st.write("#### System prompt")
-    st.text(prompt)
+    col1, col2 = st.columns(2)
 
-    n_docs = st.number_input("Number of context documents", value=5)
+    with col1:
+        st.markdown("### Developer View" if language == "en" else "### Entwickler-Ansicht")
+        prompt = display_prompt_editor(hash_text(task_text), doc_set, include_all_relevant_meta_in_system_prompt)
+        st.markdown("#### Resulting System Prompt" if language == "en" else "#### Resultierender System Prompt")
+        st.caption("The inputs form the system prompt, which guides the LLM:" if language == "en" else "Die Eingaben bilden den System Prompt, der das LLM steuert:")
+        st.code(prompt, language="markdown")
+        n_docs = st.number_input("Number of context documents" if language == "en" else "Anzahl der Kontext-Dokumente", value=5, key=f"n_docs_{hash_text(task_text)}")
 
-    question = st.text_input("Question:", key=f"rag_question_{hash_text(task_text)}", value=question)
+    with col2:
+        st.markdown("### User View" if language == "en" else "### Benutzer-Ansicht")
+        question = st.text_input("Question:" if language == "en" else "Frage:", key=f"rag_question_{hash_text(task_text)}", value=question)
+        run_rag = st.button("Run RAG pipeline" if language == "en" else "RAG Pipeline starten", key=f"rag_run_button_{hash_text(task_text)}", width="stretch")
 
-    if st.button("Run RAG pipeline", key=f"rag_run_button_{hash_text(task_text)}"):
-        retrieved_docs, response = execute_rag(question, prompt, client, collection, n_docs=n_docs)
-        display_rag_results(retrieved_docs, response)
-        if doc_validation_fn is not None:
-            return doc_validation_fn(retrieved_docs)
-        if rag_response_validation_fn is not None:
-            return rag_response_validation_fn(retrieved_docs, response)
-    return False
+        if run_rag:
+            if not question or question.strip() == "":
+                st.warning("Please enter a question to proceed." if language == "en" else "Bitte geben Sie eine Frage ein, um fortzufahren.")
+                return None
+            retrieved_docs, response = execute_rag(question, prompt, client, collection, n_docs=n_docs)
+            display_rag_results(retrieved_docs, response)
+            if doc_validation_fn is not None:
+                return doc_validation_fn(retrieved_docs)
+            if rag_response_validation_fn is not None:
+                return rag_response_validation_fn(retrieved_docs, response)
+        return False
 
 
 def validate_exercise_vdi_docs_1_fn(retrieved_docs: list[Document]):
@@ -187,6 +206,8 @@ Do not include any explanation."""
 
 
 def display_data_selection():
+    app_session: AppSession = st.session_state[APP_SESSION_KEY]
+    language = app_session.language
     def _change_module_in_session():
         doc_set = st.session_state[DATA_SELECTION_SESSION_KEY]
         app_session: AppSession = st.session_state[APP_SESSION_KEY]
@@ -195,72 +216,136 @@ def display_data_selection():
     available_document_sets = RagDocumentSet.to_list()
     available_document_sets.remove(RagDocumentSet.RESUMES)
     if len(available_document_sets) == 0:
-        st.error("Could not find any available document sets")
-    st.selectbox("Documents", available_document_sets,
+        st.error("Could not find any available document sets" if language == "en" else "Konnte keine verfügbaren Dokumentensätze finden")
+    st.selectbox("Documents" if language == "en" else "Dokumente", available_document_sets,
                  key=DATA_SELECTION_SESSION_KEY,
                  on_change=_change_module_in_session)
 
 
 def get_module_rag_vdi_exercises() -> list[Callable[[], bool | None]]:
-    task_4 = "Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
-    return [partial(display_exercise_rag,
-                    task_text="Find at least one VDI document with the topic CO2 reduction",
-                    doc_validation_fn=validate_exercise_vdi_docs_1_fn),
-            partial(display_exercise_rag,
-                    task_text='Add the price meta information to the context and extract the price of the document "Power-to-X - CO2 -Bereitstellung"',
-                    rag_response_validation_fn=validate_exercise_vdi_docs_2_fn),
-            partial(display_exercise_rag,
-                    task_text='Return the output in JSON format',
-                    rag_response_validation_fn=validate_exercise_vdi_docs_3_fn,
-                    include_all_relevant_meta_in_system_prompt=True),
-            partial(display_exercise_rag,
-                    task_text=task_4,
-                    question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
-                    rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
-                                                       task=task_4
-                                                       ))
-            ]
+    app_session = st.session_state.get(APP_SESSION_KEY)
+    language = app_session.language if app_session else "en"
+
+    if language == "de":
+        task_4 = "Verhindere, dass das LLM falsche Informationen weitergibt ('Gravitationswellen-Resonanz' ist weder Teil des Datensatzes, noch wird es für Flugzeugantriebssysteme verwendet)."
+        return [partial(display_exercise_rag,
+                        task_text="Finde mindestens ein VDI-Dokument mit dem Thema CO2-Redzuzierung",
+                        doc_validation_fn=validate_exercise_vdi_docs_1_fn),
+                partial(display_exercise_rag,
+                        task_text='Füge die Preis-Metainformationen zum Kontext hinzu und extrahiere den Preis des Dokuments "Power-to-X - CO2 -Bereitstellung"',
+                        rag_response_validation_fn=validate_exercise_vdi_docs_2_fn),
+                partial(display_exercise_rag,
+                        task_text='Gib die Ausgabe im JSON-Format zurück',
+                        rag_response_validation_fn=validate_exercise_vdi_docs_3_fn,
+                        include_all_relevant_meta_in_system_prompt=True),
+                partial(display_exercise_rag,
+                        task_text=task_4,
+                        question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
+                        rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
+                                                           task=task_4
+                                                           ))
+                ]
+    else:
+        task_4 = "Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
+        return [partial(display_exercise_rag,
+                        task_text="Find at least one VDI document with the topic CO2 reduction",
+                        doc_validation_fn=validate_exercise_vdi_docs_1_fn),
+                partial(display_exercise_rag,
+                        task_text='Add the price meta information to the context and extract the price of the document "Power-to-X - CO2 -Bereitstellung"',
+                        rag_response_validation_fn=validate_exercise_vdi_docs_2_fn),
+                partial(display_exercise_rag,
+                        task_text='Return the output in JSON format',
+                        rag_response_validation_fn=validate_exercise_vdi_docs_3_fn,
+                        include_all_relevant_meta_in_system_prompt=True),
+                partial(display_exercise_rag,
+                        task_text=task_4,
+                        question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
+                        rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
+                                                           task=task_4
+                                                           ))
+                ]
 
 
 def get_module_rag_science_papers_exercises() -> list[Callable[[], bool | None]]:
-    task_5 = 'Which two fields of research is Wolfgang Ketter working on?'
-    task_4 = "Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
-    return [partial(display_exercise_rag,
-                    task_text="Find at least one Paper with the topic electricity market",
-                    doc_validation_fn=validate_exercise_science_papers_1_fn),
-            partial(display_exercise_rag,
-                    task_text='Add the creator information to the context and return the creators of electricity market papers',
-                    rag_response_validation_fn=validate_exercise_science_papers_2_fn),
-            partial(display_exercise_rag,
-                    task_text='Return the output in JSON format',
-                    rag_response_validation_fn=validate_exercise_vdi_docs_3_fn),
-            partial(display_exercise_rag,
-                    task_text=task_4,
-                    question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
-                    rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
-                                                       task=task_4
-                                                       )),
-            partial(display_exercise_rag,
-                    task_text=task_5,
-                    rag_response_validation_fn=partial(validate_exercise_science_papers_3_fn,
-                                                       task=task_5,
-                                                       ),
-                    include_all_relevant_meta_in_system_prompt=True)
-            ]
+    app_session = st.session_state.get(APP_SESSION_KEY)
+    language = app_session.language if app_session else "en"
+
+    if language == "de":
+        task_5 = 'An welchen zwei Forschungsbereichen arbeitet Wolfgang Ketter?'
+        task_4 = "Verhindere, dass das LLM falsche Informationen weitergibt ('Gravitationswellen-Resonanz' ist weder Teil des Datensatzes, noch wird es für Flugzeugantriebssysteme verwendet)."
+        return [partial(display_exercise_rag,
+                        task_text="Finde mindestens ein Paper zum Thema Strommarkt",
+                        doc_validation_fn=validate_exercise_science_papers_1_fn),
+                partial(display_exercise_rag,
+                        task_text='Füge die Ersteller-Informationen zum Kontext hinzu und gib die Ersteller von Strommarkt-Papern zurück',
+                        rag_response_validation_fn=validate_exercise_science_papers_2_fn),
+                partial(display_exercise_rag,
+                        task_text='Gib die Ausgabe im JSON-Format zurück',
+                        rag_response_validation_fn=validate_exercise_vdi_docs_3_fn),
+                partial(display_exercise_rag,
+                        task_text=task_4,
+                        question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
+                        rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
+                                                           task=task_4
+                                                           )),
+                partial(display_exercise_rag,
+                        task_text=task_5,
+                        rag_response_validation_fn=partial(validate_exercise_science_papers_3_fn,
+                                                           task=task_5,
+                                                           ),
+                        include_all_relevant_meta_in_system_prompt=True)
+                ]
+    else:
+
+        task_5 = 'Which two fields of research is Wolfgang Ketter working on?'
+        task_4 = "Prevent the LLM from passing on false information ('Gravitationswellen-Resonanz' is not part of the dataset, nor is it used for aircraft propulsion system)"
+        return [partial(display_exercise_rag,
+                        task_text="Find at least one Paper with the topic electricity market",
+                        doc_validation_fn=validate_exercise_science_papers_1_fn),
+                partial(display_exercise_rag,
+                        task_text='Add the creator information to the context and return the creators of electricity market papers',
+                        rag_response_validation_fn=validate_exercise_science_papers_2_fn),
+                partial(display_exercise_rag,
+                        task_text='Return the output in JSON format',
+                        rag_response_validation_fn=validate_exercise_vdi_docs_3_fn),
+                partial(display_exercise_rag,
+                        task_text=task_4,
+                        question="Erkläre mir die Funktionsweise eines neuartigen Antriebsystems für Flugzeuge, das auf der Technologie der 'Gravitationswellen-Resonanz' basiert.",
+                        rag_response_validation_fn=partial(validate_exercise_vdi_docs_4_fn,
+                                                           task=task_4
+                                                           )),
+                partial(display_exercise_rag,
+                        task_text=task_5,
+                        rag_response_validation_fn=partial(validate_exercise_science_papers_3_fn,
+                                                           task=task_5,
+                                                           ),
+                        include_all_relevant_meta_in_system_prompt=True)
+                ]
 
 
 def get_module_view(exercises: list[Callable[[], bool | None]], session_key: str, module_nr: int) -> ModuleView:
-    return ModuleView(
-        title="Retrieval Augmented Generation",
+    app_session = st.session_state.get(APP_SESSION_KEY)
+    language = app_session.language if app_session else "en"
+
+    if language == "de":
+        description = """### Was ist Retrieval Augmented Generation?
+Retrieval-Augmented Generation (RAG) verbessert die Genauigkeit und Anpassungsfähigkeit von KI, indem vorgefertigte Sprachmodelle mit Echtzeit-Datenabruf aus externen Quellen (z.B. Dokumente, Datenbanken) kombiniert werden.
+Es generiert kontextbezogene Antworten – z.B. für Kundensupport, Recherche oder Aufgaben zur Erstellung von Inhalten – indem es dynamisch aktuelle oder domänenspezifische Informationen abruft, Fehler reduziert und Relevanz sicherstellt, ohne dass ein Nachtraining erforderlich ist.
+Eine praktische, effiziente Lösung für Unternehmen, die vertrauenswürdige, aktuelle KI-Ausgaben benötigen."""
+    else:
         description="""### What is Retrieval Augmented Generation?
 Retrieval-Augmented Generation (RAG) boosts AI's accuracy and adaptability by merging pre-trained language models with real-time data retrieval from external sources (e.g., documents, databases). 
 It generates context-aware responses—think customer support, research, or content tasks—by dynamically pulling current or domain-specific information, reducing errors and ensuring relevance without retraining. 
-A practical, efficient solution for businesses needing trustworthy, up-to-date AI outputs.""",
+A practical, efficient solution for businesses needing trustworthy, up-to-date AI outputs."""
+
+    return ModuleView(
+        title="Retrieval Augmented Generation",
+        description=description,
         module_nr=module_nr,
         session_key=session_key,
         data_selection_fn=display_data_selection,
         exercises=exercises,
-        render_exercises_with_level_selectbox=True
+        render_exercises_with_level_selectbox=True,
     )
 
 

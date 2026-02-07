@@ -55,14 +55,14 @@ class ModulePlaceholder(BaseModel):
 
 
 def display_task_text_field(task_text: str) -> None:
-    components.html(f"""
+    st.html(f"""
             <style>
                 {get_exercise_styling()}
             </style>
             <div>
                 <div class="task-text"><b>Task:</b> {task_text}</div>
             </div>
-        """, height=70)
+        """)
 
 
 def _display_module_header(module_nr: int, title: str, is_solved: bool = False, number_prefix: str = "Module "):
@@ -71,7 +71,7 @@ def _display_module_header(module_nr: int, title: str, is_solved: bool = False, 
     else:
         checkmark = '<span class="module-status not-solved">&#10005;</span> <!-- "x" symbol -->'
 
-    components.html(f"""
+    st.html(f"""
             <style>
                 {get_module_styling()}
             </style>
@@ -82,7 +82,7 @@ def _display_module_header(module_nr: int, title: str, is_solved: bool = False, 
                     {checkmark}
                 </div>
             </div>
-        """, height=70)
+        """)
 
 def _display_start_next_level_loading_bar():
     placeholder = st.empty()
@@ -107,7 +107,8 @@ class ModuleView:
                  render_exercises_with_level_selectbox: bool = False,
                  jump_to_next_level: bool = False,
                  show_solved_message_by_session: bool = False,
-                 description: str = ""):
+                 description: str = "",
+                 layout: str = "centered"):
         self.title = title
         self.description = description
         self.module_nr = module_nr
@@ -118,6 +119,8 @@ class ModuleView:
         self.show_solved_message_by_session = show_solved_message_by_session
         self.data_selection_fn = data_selection_fn
         self.placeholder: ModulePlaceholder | None = None
+        self.layout = layout
+        self.on_module_solved_fn: Callable[[], None] | None = None
 
         self.init_session()
 
@@ -199,10 +202,8 @@ class ModuleView:
 
     def display(self):
         was_solved = False
-        if self.placeholder is None:
-            self.init_placeholders()
-        else:
-            self.placeholder.clean_exercises()
+        self.init_placeholders()
+
         if len(self.exercises) > 1:
             self.render_progress_bar()
         if self.description and not is_presentation_mode():
@@ -229,13 +230,14 @@ class ModuleView:
                     st.divider()
 
             # auto jump to next level
-            if self.render_exercises_with_level_selectbox and was_solved and len(self.exercises) > 1:
-                if self.jump_to_next_level:
-                    _display_start_next_level_loading_bar()
-                    st.rerun()
-                else:
-                    if self.selected_level() < len(self.exercises):
-                        st.button("Start next level", on_click=self.increment_selected_level)
+            # Logic moved to render_exercise to prevent full rerun killing fragment state
+            # if self.render_exercises_with_level_selectbox and was_solved and len(self.exercises) > 1:
+            #     if self.jump_to_next_level:
+            #         _display_start_next_level_loading_bar()
+            #         st.rerun()
+            #     else:
+            #         if self.selected_level() < len(self.exercises):
+            #             st.button("Start next level", on_click=self.increment_selected_level)
 
             # update module header if solved
             if self.is_solved():
@@ -253,21 +255,67 @@ class ModuleView:
             if is_debug():
                 raise exp
 
+    @st.fragment
     def render_exercise(self, exercise_index: int) -> bool | None:
         """Renders exercise and returns True if it was solved within this function call, or False if not"""
+        # If the selected level has changed (e.g. via button callback), trigger full rerun
+        # to break out of the fragment and render the new level.
+        if self.selected_exercise_index() != exercise_index:
+            st.rerun()
+            return None
+
         session_solved = self.module_session().exercise_solved[exercise_index]
         if not is_presentation_mode():
             with self.exercise_placeholder(self.selected_exercise_index()).header:
                 _display_module_header(exercise_index + 1, "", session_solved, number_prefix="Exercise ")
+
         # run exercise
         solved = self.exercises[exercise_index]()
+
+        just_solved = False
         if solved is True and not session_solved:
             self.module_session().exercise_solved[exercise_index] = True
-        if solved or (session_solved if self.show_solved_message_by_session else False):
-            with self.exercise_placeholder(exercise_index).success_message:
-                st.success("🎉 Congratulations you solved the exercise!")
-            # update exercise header if solved
+            session_solved = True
+            just_solved = True
+
+            # update exercise header immediately if solved
             if not is_presentation_mode():
                 with self.exercise_placeholder(self.selected_exercise_index()).header:
                     _display_module_header(exercise_index + 1, "", True, number_prefix="Exercise ")
+
+            # Update module header immediately if all solved
+            if self.is_solved():
+                with self.placeholder.header:
+                    _display_module_header(self.module_nr, self.title, True)
+                if not self.module_session().was_solved:
+                    st.balloons()
+                    self.module_session().was_solved = True
+
+        if solved or (session_solved if self.show_solved_message_by_session else False):
+            # Render success message and button in the current container (fragment root)
+            # instead of injecting into the external success_message container,
+            # to avoid StreamlitFragmentWidgetsNotAllowedOutsideError.
+            st.success("🎉 Congratulations you solved the exercise!")
+
+            # Next Module / Solved Logic
+            if self.is_solved() and self.on_module_solved_fn:
+                self.on_module_solved_fn()
+
+            # Next Level Logic
+            if self.render_exercises_with_level_selectbox and len(self.exercises) > 1:
+                    # Check if solved
+                     if session_solved:
+                         if self.jump_to_next_level and just_solved:
+                              # Auto jump
+                              # We need to increment level before rerunning
+                              self.increment_selected_level()
+                              _display_start_next_level_loading_bar()
+                              st.rerun()
+                         elif not self.jump_to_next_level:
+                              # Manual jump button
+                              if self.selected_level() < len(self.exercises):
+                                   st.button("Start next level",
+                                             key=f"next_level_btn_{exercise_index}",
+                                             on_click=self.increment_selected_level)
+
         return solved

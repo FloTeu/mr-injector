@@ -16,6 +16,9 @@ from mr_injector.frontend.modules.main import ModuleView
 APP_SESSION_KEY = "app_session"
 
 class ModuleNames(BaseStrEnum):
+    PROMPT_ENGINEERING = auto()
+    PROMPT_ENGINEERING_ADVANCED = auto()
+    LLM_BIAS = auto()
     PROMPT_LEAKAGE = auto()
     PROMPT_INJECTION = auto()
     JAILBREAK = auto()
@@ -23,6 +26,7 @@ class ModuleNames(BaseStrEnum):
     EXCESSIVE_AGENCY = auto()
     RETRIEVAL_AUGMENTED_GENERATION = auto()
     RETRIEVAL_AUGMENTED_GENERATION_POISONING = auto()
+    HUMAN_AGENT_SIMULATION = auto()
 
 @dataclass
 class IndianaJonesAgentSession:
@@ -39,6 +43,7 @@ class AppSession:
     agent_session: IndianaJonesAgentSession | None = None
     resume: Document | None = None
     db_collections: dict[DBCollection, chromadb.Collection] = field(default_factory=dict)
+    language: str = "en"
 
 
     def save_in_session(self) -> Self:
