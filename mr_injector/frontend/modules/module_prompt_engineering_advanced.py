@@ -135,58 +135,60 @@ def display_exercise_chain_of_density(
     if f"cod_history_{unique_key}" not in st.session_state:
         st.session_state[f"cod_history_{unique_key}"] = []
 
-    st.markdown("**1. Text to Summarize**" if language == "en" else "**1. Text zur Zusammenfassung**")
+    tab_exercise, tab_results = st.tabs(["Exercise", "Results"] if language == "en" else ["Übung", "Ergebnisse"])
 
-    uploaded_file = st.file_uploader("Upload PDF Text (Optional)", type="pdf", key=f"cod_upload_{unique_key}")
-    input_text_key = f"cod_text_{unique_key}"
+    with tab_exercise:
+        st.markdown("**1. Text to Summarize**" if language == "en" else "**1. Text zur Zusammenfassung**")
 
-    if uploaded_file:
-        if st.session_state.get(f"last_cod_upload_{unique_key}") != uploaded_file.name:
-             extracted_text = extract_text_from_pdf_bytes(uploaded_file)
-             st.session_state[input_text_key] = extracted_text
-             st.session_state[f"last_cod_upload_{unique_key}"] = uploaded_file.name
-             st.rerun()
+        uploaded_file = st.file_uploader("Upload PDF Text (Optional)", type="pdf", key=f"cod_upload_{unique_key}")
+        input_text_key = f"cod_text_{unique_key}"
 
-    input_text = st.text_area("Input Text", value=default_text, key=input_text_key, height=150)
+        if uploaded_file:
+            if st.session_state.get(f"last_cod_upload_{unique_key}") != uploaded_file.name:
+                 extracted_text = extract_text_from_pdf_bytes(uploaded_file)
+                 st.session_state[input_text_key] = extracted_text
+                 st.session_state[f"last_cod_upload_{unique_key}"] = uploaded_file.name
+                 st.rerun()
 
-    sys_prompt_init = "You are a helpful assistant."
-    sys_prompt_refine = "You are a helpful assistant."
+        input_text = st.text_area("Input Text", value=default_text, key=input_text_key, height=150)
 
-    history = st.session_state[f"cod_history_{unique_key}"]
+        sys_prompt_init = "You are a helpful assistant."
+        sys_prompt_refine = "You are a helpful assistant."
 
-    if not history:
-        st.markdown("**2. Initial Summary**" if language == "en" else "**2. Erste Zusammenfassung**")
-        st.info("Step 1: Generate an initial summary of ~80 words." if language == "en" else "Schritt 1: Generiere eine erste Zusammenfassung von ca. 80 Wörtern.")
-        prompt = st.text_area("Prompt (Initial Summary)",
-                              f"Summarize the following text in under 80 words. Use the language '{language}'. \n\nText: <text>",
-                              key=f"cod_sys_init_{unique_key}")
-        if st.button("Generate Initial Summary" if language == "en" else "Erste Zusammenfassung generieren", key=f"cod_btn_init_{unique_key}"):
-            prompt = prompt.replace("<text>", input_text)
-            with st.spinner():
-                summary = llm_call(client, system_prompt=sys_prompt_init, user_prompt=prompt, model=OpenAIModels.GPT_4o_MINI)
-            st.session_state[f"cod_history_{unique_key}"].append({"summary": summary, "entities": []})
-            st.rerun()
-    else:
-        st.markdown("**Current State**" if language == "en" else "**Aktueller Status**")
+        history = st.session_state[f"cod_history_{unique_key}"]
 
-        # Display history or just latest? Let's display latest and an expander for history.
-        latest = history[-1]
-        iteration = len(history) - 1
+        if not history:
+            st.markdown("**2. Initial Summary**" if language == "en" else "**2. Erste Zusammenfassung**")
+            st.info("Step 1: Generate an initial summary of ~80 words." if language == "en" else "Schritt 1: Generiere eine erste Zusammenfassung von ca. 80 Wörtern.")
+            prompt = st.text_area("Prompt (Initial Summary)",
+                                  f"Summarize the following text in under 80 words. Use the language '{language}'. \n\nText: <text>",
+                                  key=f"cod_sys_init_{unique_key}")
+            if st.button("Generate Initial Summary" if language == "en" else "Erste Zusammenfassung generieren", key=f"cod_btn_init_{unique_key}"):
+                prompt = prompt.replace("<text>", input_text)
+                with st.spinner():
+                    summary = llm_call(client, system_prompt=sys_prompt_init, user_prompt=prompt, model=OpenAIModels.GPT_4o_MINI)
+                st.session_state[f"cod_history_{unique_key}"].append({"summary": summary, "entities": []})
+                st.rerun()
+        else:
+            latest = history[-1]
+            iteration = len(history) - 1
 
-        st.write(f"**Iteration {iteration} Summary:**")
-        st.info(latest["summary"])
+            if iteration < 3:
+                st.markdown(f"**3. Refinement (Iteration {iteration + 1})**" if language == "en" else f"**3. Verfeinerung (Iteration {iteration + 1})**")
 
-        if latest["entities"]:
-             st.write(f"**Added Entities:** {', '.join(latest['entities'])}")
+                prev_summary = latest["summary"]
 
-        if iteration < 3:
-            st.markdown("---")
-            st.markdown(f"**3. Refinement (Iteration {iteration + 1})**" if language == "en" else f"**3. Verfeinerung (Iteration {iteration + 1})**")
+                all_previous_entities = []
+                for h in history:
+                     if h.get("entities"):
+                         all_previous_entities.extend(h["entities"])
 
-            prev_summary = latest["summary"]
-            prompt = f"""Article: {input_text}
+                entities_list_str = ", ".join(all_previous_entities)
+
+                prompt = f"""Article: {input_text}
 
 Current Summary: {prev_summary}
+Already Covered Entities: {entities_list_str}
 
 Step 2: Identify 1-3 important entities (Concept, Person, Place, etc.) from the Article that are missing from the Current Summary.
 Step 3: Rewrite the Current Summary to include these new entities. Keep the new summary under 80 words.
@@ -196,65 +198,70 @@ Output format:
 Entities: [List of entities]
 Summary: [New Summary]"""
 
-            st.write("### Refinement Prompt")
-            display_prompt = prompt.replace(input_text, "[... Article Text ...]") if len(input_text) > 100 else prompt
-            st.code(display_prompt)
+                st.write("### Refinement Prompt")
+                display_prompt = prompt.replace(input_text, "[... Article Text ...]") if len(input_text) > 100 else prompt
+                st.code(display_prompt)
 
-            if st.button("Refine (Identify & Fuse Entities)" if language == "en" else "Verfeinern (Entitäten identifizieren & einfügen)", key=f"cod_refine_{unique_key}"):
-                 with st.spinner():
-                    response = llm_call(client, system_prompt=sys_prompt_refine, user_prompt=prompt, model=OpenAIModels.GPT_4o_MINI)
+                if st.button("Refine (Identify & Fuse Entities)" if language == "en" else "Verfeinern (Entitäten identifizieren & einfügen)", key=f"cod_refine_{unique_key}"):
+                     with st.spinner():
+                        response = llm_call(client, system_prompt=sys_prompt_refine, user_prompt=prompt, model=OpenAIModels.GPT_4o_MINI)
 
-                 # Improved parsing with Regex
-                 new_summary = response
-                 entities = []
+                     # Improved parsing with Regex
+                     new_summary = response
+                     entities = []
 
-                 # Pattern to capture Entities and Summary
-                 match = re.search(r"Entities:\s*(.*?)\s*Summary:\s*(.*)", response, re.DOTALL | re.IGNORECASE)
+                     # Pattern to capture Entities and Summary
+                     match = re.search(r"Entities:\s*(.*?)\s*Summary:\s*(.*)", response, re.DOTALL | re.IGNORECASE)
 
-                 if match:
-                     entities_text = match.group(1).strip()
-                     new_summary = match.group(2).strip()
+                     if match:
+                         entities_text = match.group(1).strip()
+                         new_summary = match.group(2).strip()
 
-                     # Clean up entities
-                     entities_text = entities_text.strip("[]")
-                     if entities_text:
-                         entities = [e.strip() for e in entities_text.split(",")]
-                 else:
-                     # Fallback logic
-                     if "Summary:" in response:
-                         parts = response.split("Summary:")
-                         new_summary = parts[1].strip()
-                         ent_text = parts[0]
-                         if "Entities:" in ent_text:
-                             ent_part = ent_text.split("Entities:")[1].strip()
-                             entities = [e.strip() for e in ent_part.strip("[]\n .").split(",")]
-                     elif "Summary" in response and "\n" in response:
-                         parts = response.split("\n")
-                         new_summary = parts[-1]
+                         # Clean up entities
+                         entities_text = entities_text.strip("[]")
+                         if entities_text:
+                             entities = [e.strip() for e in entities_text.split(",")]
+                     else:
+                         # Fallback logic
+                         if "Summary:" in response:
+                             parts = response.split("Summary:")
+                             new_summary = parts[1].strip()
+                             ent_text = parts[0]
+                             if "Entities:" in ent_text:
+                                 ent_part = ent_text.split("Entities:")[1].strip()
+                                 entities = [e.strip() for e in ent_part.strip("[]\n .").split(",")]
+                         elif "Summary" in response and "\n" in response:
+                             parts = response.split("\n")
+                             new_summary = parts[-1]
 
-                 st.session_state[f"cod_history_{unique_key}"].append({"summary": new_summary, "entities": entities})
-                 st.rerun()
+                     st.session_state[f"cod_history_{unique_key}"].append({"summary": new_summary, "entities": entities})
+                     st.rerun()
 
-        st.markdown("---")
-        col1, col2 = st.columns(2)
+            st.markdown("---")
+            col1, col2 = st.columns(2)
 
-        if col1.button("Restart" if language == "en" else "Neustart", key=f"cod_restart_{unique_key}"):
-            st.session_state[f"cod_history_{unique_key}"] = []
-            st.rerun()
+            if col1.button("Restart" if language == "en" else "Neustart", key=f"cod_restart_{unique_key}"):
+                st.session_state[f"cod_history_{unique_key}"] = []
+                st.rerun()
 
-        if iteration >= 1:
-            if col2.button("Finish Exercise" if language == "en" else "Übung abschließen", key=f"cod_finish_{unique_key}"):
-                st.success("Great job practicing Chain of Density!" if language == "en" else "Gut gemacht! Du hast Chain of Density geübt!")
-                return True
+            if iteration >= 1:
+                if col2.button("Finish Exercise" if language == "en" else "Übung abschließen", key=f"cod_finish_{unique_key}"):
+                    st.success("Great job practicing Chain of Density!" if language == "en" else "Gut gemacht! Du hast Chain of Density geübt!")
+                    return True
 
-    st.markdown("### History of Iterations" if language == "en" else "### Verlauf der Iterationen")
+    with tab_results:
+        history = st.session_state[f"cod_history_{unique_key}"]
+        st.markdown("### History of Iterations" if language == "en" else "### Verlauf der Iterationen")
 
-    for i, item in enumerate(history):
-        with st.expander(f"Iteration {i}" + (f": {item['entities']}" if item.get("entities") else ""), expanded=(i == len(history)-1)):
-            st.info(item["summary"])
+        if not history:
+             st.info("No results yet." if language == "en" else "Noch keine Ergebnisse.")
+        else:
+            for i, item in enumerate(history):
+                with st.expander(f"Iteration {i}" + (f": {item['entities']}" if item.get("entities") else ""), expanded=(i == len(history)-1)):
+                    st.info(item["summary"])
 
-            if item.get("entities"):
-                st.write(f"**Entities:** {', '.join(item['entities'])}")
+                    if item.get("entities"):
+                        st.write(f"**Entities:** {', '.join(item['entities'])}")
 
     return None
 
