@@ -422,7 +422,7 @@ Dies kombiniert **Indirect Prompt Injection** (OWASP LLM01) mit **Excessive Agen
 der Agent hat mehr Fähigkeiten als nötig, und die Injektion nutzt dies aus."""
 
     return ModuleView(
-        title="Data Exfiltration",
+        title="Data Exfiltration (ASI01, ASI02, ASI06)",
         description=description,
         module_nr=module_nr,
         session_key=f"module_{module_nr}",

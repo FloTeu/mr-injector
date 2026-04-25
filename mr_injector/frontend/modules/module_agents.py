@@ -429,7 +429,7 @@ LLM-'Agenten' delegiert werden, um dies dynamisch basierend auf dem Eingabe-Prom
 rufen typischerweise wiederholt ein LLM auf und nutzen die Ausgabe früherer Aufrufe, um nachfolgende Aufrufe zu begründen und zu steuern."""
 
     return ModuleView(
-        title="Excessive Agency",
+        title="Excessive Agency (ASI01, ASI02, ASI04)",
         description=description,
         module_nr=module_nr,
         session_key=f"module_{module_nr}",
