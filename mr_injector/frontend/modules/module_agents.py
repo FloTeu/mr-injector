@@ -273,7 +273,10 @@ def _setup_db_exercise(
     language = app_session.language if app_session else "en"
     use_mcp_server = st.toggle("Add MCP Server Tool" if language == "en" else "MCP Server Tool hinzufügen")
     run_scan = st.toggle("Add Read-Only Scan" if language == "en" else "Read-Only Scan hinzufügen")
-    image_path = Path(mr_injector.__file__).parent.parent / "files" / f"AGENT_INJECTION_DB_{'2' if run_scan else '1'}.png"
+    if use_mcp_server:
+        image_path = Path(mr_injector.__file__).parent.parent / "files" / f"AGENT_INJECTION_MCP_{'2' if run_scan else '1'}.png"
+    else:
+        image_path = Path(mr_injector.__file__).parent.parent / "files" / f"AGENT_INJECTION_DB_{'2' if run_scan else '1'}.png"
     db_path = Path(mr_injector.__file__).parent.parent / "files" / "chinook.db"
 
     if image_path.exists():
