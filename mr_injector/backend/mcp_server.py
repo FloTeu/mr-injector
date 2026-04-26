@@ -45,6 +45,4 @@ def search_duckduckgo_abstract_tool(query: str) -> str:
 #
 #     return search_ddg(query)
 
-if __name__ == "__main__":
-    mcp.run(transport="http", host="127.0.0.1", port=8000)
 
