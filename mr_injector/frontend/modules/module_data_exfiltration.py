@@ -1,6 +1,9 @@
 import json
-
+import mr_injector
 import streamlit as st
+
+from pathlib import Path
+
 from openai import OpenAI, AzureOpenAI
 from openai import pydantic_function_tool
 from openai.types.chat import ChatCompletionFunctionToolParam
@@ -251,6 +254,12 @@ def display_exercise_data_exfiltration() -> bool | None:
         st.session_state[reveal_key] = False
     if EMPLOYEES_KEY not in st.session_state:
         st.session_state[EMPLOYEES_KEY] = list(BASE_EMPLOYEE_DATA)
+
+
+    image_path = Path(mr_injector.__file__).parent.parent / "files" / "AGENT_DATA_EXFILTRATION.png"
+    if image_path.exists():
+        _, col_img, _ = st.columns([1, 3, 1], gap="large")
+        col_img.image(image_path)
 
     col_data, col_agent = st.columns([1, 1], gap="large")
 

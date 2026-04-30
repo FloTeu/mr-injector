@@ -154,8 +154,8 @@ def get_module_definitions():
     agent_sec = structure[1][1]
     if os.environ.get("TAVILY_API_KEY"):
         agent_sec.append((ModuleNames.UNBOUNDED_CONSUMPTION, get_module_unbounded_consumption))
-    agent_sec.append((ModuleNames.EXCESSIVE_AGENCY, get_module_excessive_agency))
     agent_sec.append((ModuleNames.DATA_EXFILTRATION, get_module_data_exfiltration))
+    agent_sec.append((ModuleNames.EXCESSIVE_AGENCY, get_module_excessive_agency))
 
     if rag_module:
         structure[2][1].append(rag_module)
