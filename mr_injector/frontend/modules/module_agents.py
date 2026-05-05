@@ -317,8 +317,10 @@ DB Schema Definition: {schema}"""
     with col_db:
         st.markdown("#### SQL Database")
 
+        status_placeholder = st.empty()
         if left_extra_fn:
-            left_extra_fn()
+            with status_placeholder:
+                left_extra_fn()
 
         with st.expander("View Schema" if language == "en" else "Schema anzeigen"):
             st.code(schema, language="sql")
@@ -338,7 +340,6 @@ DB Schema Definition: {schema}"""
             download_chinebook_db()
             st.rerun()
 
-
     # ── Left column: agent interaction ──────────────────────────────────────
     with col_agent:
         st.markdown("#### Agent")
@@ -357,6 +358,9 @@ DB Schema Definition: {schema}"""
                 db_connection=connection, run_injection_scan=run_scan,
             )
             connection.close()
+            if left_extra_fn:
+                with status_placeholder:
+                    left_extra_fn()
             return True
 
     return False
