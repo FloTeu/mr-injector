@@ -50,7 +50,9 @@ def display_exercise_jailbreak(system_prompt: str,
     if show_open_router_warning and len(OpenRouterModels.to_list(only_available=True)) == 0:
         st.warning("Please set `OPENROUTER_API_KEY` as environment variable" if language == "en" else "Bitte setze `OPENROUTER_API_KEY` als Umgebungsvariable")
 
-    model = st.selectbox("Model", OpenRouterModels.to_list(only_available=True) + OpenAIModels.to_list(),
+    _model_options = OpenRouterModels.to_list(only_available=True) + OpenAIModels.to_list()
+    _default_index = _model_options.index(OpenAIModels.GPT_4_1) if OpenAIModels.GPT_4_1 in _model_options else 0
+    model = st.selectbox("Model", _model_options, index=_default_index,
                          key=f"model_selection_{hash_text(system_prompt)}")
     try:
         model = OpenRouterModels(model)

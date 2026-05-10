@@ -35,7 +35,9 @@ def display_exercise_prompt_injection(system_prompt: str,
         st.code(system_prompt, language=None)
     display_task_text_field(task_text)
 
-    model = st.selectbox("Model", OpenRouterModels.to_list(only_available=True) + OpenAIModels.to_list(), key=f"model_selection_{hash_text(system_prompt)}")
+    _model_options = OpenRouterModels.to_list(only_available=True) + OpenAIModels.to_list()
+    _default_index = _model_options.index(OpenAIModels.GPT_4_1) if OpenAIModels.GPT_4_1 in _model_options else 0
+    model = st.selectbox("Model", _model_options, index=_default_index, key=f"model_selection_{hash_text(system_prompt)}")
     try:
         model = OpenRouterModels(model)
     except:
