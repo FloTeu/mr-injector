@@ -1,3 +1,5 @@
+import os
+
 from openai import pydantic_function_tool
 from dotenv import load_dotenv
 from openai.types.chat import ChatCompletionFunctionToolParam
@@ -30,11 +32,12 @@ def get_agent_config(instructions: str,
     if include_db_tool:
         tools.append(_chat_completion_to_response_api_format(pydantic_function_tool(QuerySQLDB)))
     if include_mcp_server_tools:
+        mcp_url = os.getenv("MCP_SERVER_URL", "https://mr-injector-feature-4-mcp.fastmcp.app/mcp")
         tools.append(
             {
                 "type": "mcp",
                 "server_label": "mr-injector",
-                "server_url": "https://mr-injector-feature-4-mcp.fastmcp.app/mcp",
+                "server_url": mcp_url,
                 "require_approval": "never",
             }
         )

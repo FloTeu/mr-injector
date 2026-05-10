@@ -22,6 +22,7 @@ from mr_injector.frontend.modules.module_prompt_injection import get_module_prom
 from mr_injector.frontend.modules.module_jailbreaking import get_module_jailbreak
 from mr_injector.frontend.modules.module_rag import get_module_rag, DATA_SELECTION_SESSION_KEY
 from mr_injector.frontend.modules.module_agents import get_module_unbounded_consumption, get_module_excessive_agency
+from mr_injector.frontend.modules.module_data_exfiltration import get_module_data_exfiltration
 from mr_injector.frontend.modules.module_rag_poisoning import get_module_rag_poisoning
 from mr_injector.frontend.modules.module_human_agent_simulation import get_module_human_agent_simulation
 from mr_injector.frontend.security import check_password
@@ -153,6 +154,7 @@ def get_module_definitions():
     agent_sec = structure[1][1]
     if os.environ.get("TAVILY_API_KEY"):
         agent_sec.append((ModuleNames.UNBOUNDED_CONSUMPTION, get_module_unbounded_consumption))
+    agent_sec.append((ModuleNames.DATA_EXFILTRATION, get_module_data_exfiltration))
     agent_sec.append((ModuleNames.EXCESSIVE_AGENCY, get_module_excessive_agency))
 
     if rag_module:
