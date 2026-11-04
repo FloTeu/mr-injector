@@ -32,7 +32,7 @@ def get_agent_config(instructions: str,
     if include_db_tool:
         tools.append(_chat_completion_to_response_api_format(pydantic_function_tool(QuerySQLDB)))
     if include_mcp_server_tools:
-        mcp_url = os.getenv("MCP_SERVER_URL", "https://mr-injector-feature-4-mcp.fastmcp.app/mcp")
+        mcp_url = os.getenv("MCP_SERVER_URL", "https://mr-injector-feature-conference.fastmcp.app/mcp")
         tools.append(
             {
                 "type": "mcp",
