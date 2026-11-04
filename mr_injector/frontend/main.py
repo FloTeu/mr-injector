@@ -160,6 +160,18 @@ def get_module_definitions():
     if rag_module:
         structure[2][1].append(rag_module)
 
+    # if is_presentation_mode():
+    #     presentation_modules = {
+    #         ModuleNames.JAILBREAK,
+    #         ModuleNames.PROMPT_INJECTION,
+    #         ModuleNames.DATA_EXFILTRATION,
+    #         ModuleNames.EXCESSIVE_AGENCY,
+    #     }
+    #     structure = [
+    #         (cat, [(name, factory) for name, factory in mods if name in presentation_modules])
+    #         for cat, mods in structure
+    #     ]
+
     return structure
 
 def load_modules() -> dict[ModuleNames, ModuleView]:
